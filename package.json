@@ -1,0 +1,26 @@
+{
+  "name": "ai-bde",
+  "private": true,
+  "version": "0.1.0",
+  "description": "AI Business Development Executive platform — Phase 1",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "workers/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/dispatcher && npm run build -w @ai-bde/web",
+    "typecheck": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run typecheck -w @ai-bde/dispatcher && npm run typecheck -w @ai-bde/web",
+    "dev:web": "npm run dev -w @ai-bde/web",
+    "dev:dispatcher": "npm run dev -w @ai-bde/dispatcher",
+    "db:migrate": "node scripts/migrate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "pg": "^8.14.1",
+    "typescript": "^5.8.2"
+  },
+  "license": "UNLICENSED"
+}
