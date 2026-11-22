@@ -1,4 +1,5 @@
 import { HitlQueue } from "@/components/HitlQueue";
+import { getCalcomLink } from "@/lib/calcom";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,10 @@ export default async function HomePage() {
         approved case studies — never invent clients or metrics.
       </p>
       {error ? <div className="flash error">{error}</div> : null}
-      <HitlQueue initialItems={rows} />
+      <HitlQueue
+        initialItems={rows}
+        bookingLinkBase={getCalcomLink() ?? null}
+      />
     </>
   );
 }

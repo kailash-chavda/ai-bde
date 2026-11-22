@@ -71,7 +71,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `OPENAI_MODEL` or `LLM_MODEL` | no | Chat model (default `gpt-4o-mini`) |
 | `SMTP_*` | no | Real SMTP; unset = dry-run dispatcher |
 | `EMBEDDING_PROVIDER` | no | `stub` (default) until vectors are wired |
-| `CAL_WEBHOOK_SECRET` | no | Cal.com webhook verification |
+| `CALCOM_WEBHOOK_SECRET` | no | Cal.com `X-Cal-Signature-256` HMAC secret (`CAL_WEBHOOK_SECRET` still accepted) |
+| `CALCOM_LINK` | no | Public Cal.com event URL; shown on HITL / lead detail with `lead_id` metadata |
 | `DISPATCHER_POLL_MS` | no | Dispatcher poll interval (default 5000) |
 | `DISCOVER_SOURCE_KIND` | no | `fixture` (default), `rss`, or `job_board_api` |
 | `DISCOVER_FEED_ALLOWLIST` | for live feeds | Comma-separated allowlisted feed/API URL prefixes |
@@ -93,6 +94,44 @@ Copy `.env.example` → `.env` and fill what you need.
    - Calendar booking and opt-out (best-effort)
 
 Payload is short `{ "content": "..." }` text (no embeds required). Without `DISCORD_WEBHOOK_URL`, alerts are logged as `[discord:skip]` and the rest of the flow still works.
+
+### Configure Cal.com booking webhook (local)
+
+1. Set a public event URL in root `.env`:
+   ```bash
+   CALCOM_LINK=https://cal.com/your-handle/discovery-15
+   CALCOM_WEBHOOK_SECRET=dev-calcom-secret-change-me
+   ```
+2. Restart `npm run dev:web`. HITL queue + lead detail show **Book discovery** when `CALCOM_LINK` is set (links include `metadata[lead_id]` for attribution).
+3. Expose localhost (e.g. `ngrok http 3000`) and in Cal.com → **Settings → Developer → Webhooks** create a webhook:
+   - **Subscriber URL:** `https://<tunnel>/api/webhooks/calcom`
+   - **Event:** Booking Created
+   - **Secret:** same value as `CALCOM_WEBHOOK_SECRET`
+4. Without a tunnel, smoke-test the handler (secret unset, or send HMAC / raw secret in the header):
+
+```bash
+# Secret unset — open local stub
+curl -s -X POST http://localhost:3000/api/webhooks/calcom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "triggerEvent": "BOOKING_CREATED",
+    "payload": {
+      "uid": "demo-booking",
+      "metadata": { "lead_id": "<LEAD_ID>" },
+      "attendees": [{ "email": "alex@examplehealth.com" }]
+    }
+  }'
+
+# Secret set — HMAC of raw body (or header = secret for local smoke)
+BODY='{"triggerEvent":"BOOKING_CREATED","payload":{"uid":"demo","metadata":{"lead_id":"<LEAD_ID>"}}}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$CALCOM_WEBHOOK_SECRET" | awk '{print $2}')
+curl -s -X POST http://localhost:3000/api/webhooks/calcom \
+  -H "Content-Type: application/json" \
+  -H "X-Cal-Signature-256: $SIG" \
+  -d "$BODY"
+```
+
+On `BOOKING_CREATED`: lead → `DiscoveryBooked`, active `lead_sequences` cancelled + Redis `seq:due` cleared, Discord `calendar_booked` if configured. Legacy path `POST /api/webhooks/cal` still works.
 
 ## Phase 2B — Discover (job hiring signals)
 
@@ -218,10 +257,10 @@ curl -s -X POST http://localhost:3000/api/inbound/reply \
   -d '{ "lead_id": "<LEAD_ID>", "raw_body": "Please unsubscribe me" }'
 ```
 
-10. **Cal.com booking stub** → `DiscoveryBooked` + sequence cancelled:
+10. **Cal.com booking** → `DiscoveryBooked` + sequence cancelled (see **Configure Cal.com** above):
 
 ```bash
-curl -s -X POST http://localhost:3000/api/webhooks/cal \
+curl -s -X POST http://localhost:3000/api/webhooks/calcom \
   -H "Content-Type: application/json" \
   -d '{
     "triggerEvent": "BOOKING_CREATED",
@@ -270,7 +309,8 @@ curl -s -X POST http://localhost:3000/api/webhooks/cal \
 | `POST` | `/api/case-studies/:id/approve` | Approve → embed stub |
 | `GET` | `/api/inboxes` | Inbox health |
 | `POST` | `/api/crm/sync` | Postgres-only stub |
-| `POST` | `/api/webhooks/cal` | Cal.com booking → pause sequence |
+| `POST` | `/api/webhooks/calcom` | Cal.com booking → `DiscoveryBooked` + cancel sequence |
+| `POST` | `/api/webhooks/cal` | Legacy alias of `/api/webhooks/calcom` |
 | `GET` | `/api/health` | DB + HITL depth |
 
 ## Grounding rules

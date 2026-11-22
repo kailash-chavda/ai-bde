@@ -1,4 +1,5 @@
 import { SequenceControls } from "@/components/SequenceControls";
+import { buildCalcomBookingUrl } from "@/lib/calcom";
 import { query } from "@/lib/db";
 import { isResumablePause } from "@ai-bde/orchestrator";
 import { notFound } from "next/navigation";
@@ -29,6 +30,15 @@ export default async function LeadDetailPage({
 
   if (!lead.rows[0]) notFound();
   const row = lead.rows[0];
+  const dm = (row.decision_maker ?? {}) as {
+    full_name?: string;
+    email?: string;
+  };
+  const bookingUrl = buildCalcomBookingUrl({
+    leadId: id,
+    email: dm.email,
+    name: dm.full_name,
+  });
 
   const sequence = await query<{
     id: string;
@@ -73,6 +83,14 @@ export default async function LeadDetailPage({
         {row.disqualify_reason ? ` · ${row.disqualify_reason}` : ""}
         {row.pause_reason ? ` · paused: ${row.pause_reason}` : ""}
       </p>
+      {bookingUrl ? (
+        <p className="lede">
+          <a href={bookingUrl} target="_blank" rel="noreferrer">
+            Book discovery (Cal.com)
+          </a>
+          <span className="meta"> · embeds lead_id for webhook matching</span>
+        </p>
+      ) : null}
 
       <h2>Sequence</h2>
       {seq ? (
