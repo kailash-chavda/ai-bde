@@ -67,7 +67,31 @@ curl -s -X POST http://localhost:3000/api/leads/webhook \
 3. **Approve** the draft on the HITL queue (home page).
 4. Run the dispatcher to mark send (dry-run) and transition lead → `Contacted`.
 
-CSV / Sales Navigator:
+CSV / Sales Navigator — flat `rows` (CSV-style) or nested `leads`:
+
+```bash
+curl -s -X POST http://localhost:3000/api/leads/import \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "csv",
+    "rows": [{
+      "company": "Acme Health",
+      "domain": "acme.example",
+      "decision_maker": "Alex Chen",
+      "role": "CTO",
+      "geography": "US",
+      "email": "alex@acme.example"
+    }]
+  }'
+```
+
+PowerShell:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:3000/api/leads/import -ContentType 'application/json' -Body '{"source":"csv","rows":[{"company":"Acme Health","domain":"acme.example","decision_maker":"Alex Chen","role":"CTO","geography":"US","email":"alex@acme.example"}]}'
+```
+
+Nested `leads` (same endpoint) still works:
 
 ```bash
 curl -s -X POST http://localhost:3000/api/leads/import \

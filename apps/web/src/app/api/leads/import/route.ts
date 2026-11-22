@@ -3,10 +3,74 @@ import { ingestLead } from "@/lib/pipeline";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const ImportSchema = z.object({
-  source: z.enum(["csv", "sales_navigator"]).default("csv"),
-  leads: z.array(LeadIngestSchema).min(1),
-});
+/** Envelope accepts either nested `leads` or flat CSV-style `rows`. */
+const ImportSchema = z
+  .object({
+    source: z.enum(["csv", "sales_navigator"]).default("csv"),
+    leads: z.array(z.unknown()).min(1).optional(),
+    rows: z.array(z.unknown()).min(1).optional(),
+  })
+  .refine((d) => (d.leads?.length ?? 0) > 0 || (d.rows?.length ?? 0) > 0, {
+    message: "Provide a non-empty leads or rows array",
+  });
+
+/**
+ * Map flat CSV/SN-style objects (decision_maker as name string; email/role
+ * at top level) into LeadIngest shape. Nested decision_maker objects pass through.
+ */
+function normalizeIngestRow(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
+  const row = raw as Record<string, unknown>;
+
+  if (row.decision_maker && typeof row.decision_maker === "object") {
+    return row;
+  }
+
+  const name =
+    (typeof row.decision_maker === "string" ? row.decision_maker : "") ||
+    (typeof row.full_name === "string" ? row.full_name : "") ||
+    (typeof row.name === "string" ? row.name : "");
+  const email = typeof row.email === "string" && row.email ? row.email : undefined;
+  const role =
+    (typeof row.role === "string" && row.role ? row.role : undefined) ||
+    (typeof row.title === "string" && row.title ? row.title : undefined) ||
+    "Unknown";
+  const linkedin =
+    (typeof row.linkedin_url === "string" && row.linkedin_url
+      ? row.linkedin_url
+      : undefined) ||
+    (typeof row.linkedin === "string" && row.linkedin ? row.linkedin : undefined);
+
+  return {
+    idempotency_key: row.idempotency_key,
+    external_id: row.external_id ?? row.id,
+    company: row.company ?? row.account ?? "",
+    domain: row.domain ?? row.company_domain ?? "",
+    geography: row.geography || undefined,
+    decision_maker: {
+      full_name: name,
+      email,
+      linkedin_url: linkedin,
+      role,
+    },
+    tech_hints: Array.isArray(row.tech_hints)
+      ? row.tech_hints
+      : typeof row.tech === "string" && row.tech
+        ? [row.tech]
+        : undefined,
+    hiring_hints: Array.isArray(row.hiring_hints)
+      ? row.hiring_hints
+      : typeof row.hiring === "string" && row.hiring
+        ? [row.hiring]
+        : undefined,
+    notes: row.notes || undefined,
+    message: row.message || undefined,
+    linkedin_url: linkedin,
+    employee_band: row.employee_band,
+    tier_hint: row.tier_hint,
+    utm: row.utm,
+  };
+}
 
 function parseCsv(text: string): unknown[] {
   const lines = text
@@ -21,21 +85,7 @@ function parseCsv(text: string): unknown[] {
     headers.forEach((h, i) => {
       row[h] = cols[i] ?? "";
     });
-    return {
-      company: row.company ?? row.account ?? "",
-      domain: row.domain ?? row.company_domain ?? "",
-      geography: row.geography || undefined,
-      decision_maker: {
-        full_name: row.full_name ?? row.name ?? row.decision_maker ?? "",
-        email: row.email || undefined,
-        linkedin_url: row.linkedin_url || row.linkedin || undefined,
-        role: row.role ?? row.title ?? "Unknown",
-      },
-      tech_hints: row.tech ? [row.tech] : undefined,
-      hiring_hints: row.hiring ? [row.hiring] : undefined,
-      notes: row.notes || undefined,
-      external_id: row.external_id || row.id || undefined,
-    };
+    return normalizeIngestRow(row);
   });
 }
 
@@ -55,9 +105,12 @@ export async function POST(req: Request) {
         const text = await (file as File).text();
         if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
           const json = JSON.parse(text) as unknown;
-          leadsRaw = Array.isArray(json)
-            ? json
-            : ((json as { leads?: unknown[] }).leads ?? []);
+          if (Array.isArray(json)) {
+            leadsRaw = json;
+          } else {
+            const obj = json as { leads?: unknown[]; rows?: unknown[] };
+            leadsRaw = obj.leads ?? obj.rows ?? [];
+          }
           source = "sales_navigator";
         } else {
           leadsRaw = parseCsv(text);
@@ -76,7 +129,7 @@ export async function POST(req: Request) {
           );
         }
         source = parsed.data.source;
-        leadsRaw = parsed.data.leads;
+        leadsRaw = parsed.data.leads ?? parsed.data.rows ?? [];
       }
     }
 
@@ -88,7 +141,7 @@ export async function POST(req: Request) {
     }> = [];
 
     for (const raw of leadsRaw) {
-      const parsed = LeadIngestSchema.safeParse(raw);
+      const parsed = LeadIngestSchema.safeParse(normalizeIngestRow(raw));
       if (!parsed.success) {
         results.push({
           leadId: "",
