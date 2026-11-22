@@ -13,7 +13,8 @@
     "typecheck": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run typecheck -w @ai-bde/dispatcher && npm run typecheck -w @ai-bde/web",
     "dev:web": "npm run dev -w @ai-bde/web",
     "dev:dispatcher": "npm run dev -w @ai-bde/dispatcher",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node scripts/migrate.mjs",
+    "seed:case-studies": "node scripts/seed-case-studies.mjs"
   },
   "engines": {
     "node": ">=20"

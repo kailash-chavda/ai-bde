@@ -1,0 +1,267 @@
+[
+  {
+    "slug": "panocut-panorama-crop",
+    "title": "Panorama Crop — PanoCut",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "photo-editing", "social-media"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Image Processing", "In-App Billing"],
+    "summary": "Split & crop wide panorama photos into multi-part Instagram posts in seconds. Supports 1–10 splits, multiple aspect ratios, and live preview. Available in 12+ languages. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "1M+", "verified": true },
+      { "metric": "rating", "value": "4.2", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — scale Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "postplus-post-maker",
+    "title": "Post Maker for Social Media — PostPlus",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "social-media", "content-creation"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Canvas API", "Notifications"],
+    "summary": "All-in-one social media post designer with 5000+ templates, 250+ fonts, a blank canvas editor, and scheduling reminders. Built for businesses, influencers, and content creators. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "100K+", "verified": true },
+      { "metric": "rating", "value": "4.4", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — scale Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "puzzlestar-instagram-grid",
+    "title": "Instagram Grid Layout — PuzzleStar",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "photo-editing", "social-media"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Photo Editing", "Custom Fonts"],
+    "summary": "Create stunning puzzle-style Instagram profile grids using customizable collage templates. Supports 1080×1080px high-quality IG grids with dozens of fonts and layouts. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "1M+", "verified": true },
+      { "metric": "rating", "value": "4.3", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — scale Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "business-card-maker",
+    "title": "Business Card Maker & Template",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "design", "productivity"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "PDF Export", "Canvas API"],
+    "summary": "Professional visiting card designer with 300+ templates, 3500+ stickers, dual-side editing, and export to PDF/PNG/JPG. Supports landscape, portrait & square card orientations. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "10K+", "verified": true },
+      { "metric": "rating", "value": "4.4", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "invitation-card-maker",
+    "title": "Invitation Card Maker",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "events", "design"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Template Engine", "Social Sharing"],
+    "summary": "Digital e-card creator for weddings, birthdays, parties, baby showers, and more. Features hundreds of category-filtered templates with full text, font, photo & color customization. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "50K+", "verified": true },
+      { "metric": "rating", "value": "4.4", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "quotify-quotes-creator",
+    "title": "Quotes Creator — Quotify",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "social-media", "content-creation"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Canvas API", "Custom Fonts"],
+    "summary": "Motivational and inspirational quote maker app. Customize quote typography, backgrounds, and layouts to create aesthetic posts for social media. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "50K+", "verified": true },
+      { "metric": "rating", "value": "3.9", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "factofy-daily-random-facts",
+    "title": "Daily Random Facts — Factofy",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "education"],
+    "tech_tags": ["Android Native", "Kotlin", "Jetpack Compose", "Room Database", "REST APIs"],
+    "summary": "Discover amazing facts, learn new things daily, and build a collection of trivia across 30+ categories. Feature-rich education and learning assistant. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "10K+", "verified": true },
+      { "metric": "rating", "value": "4.3", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "sprng-intercom",
+    "title": "SPRNG Intercom",
+    "service_pillars": ["mobile_native"],
+    "industries": ["proptech", "access-control", "residential"],
+    "tech_tags": ["Android Native", "Kotlin", "VoIP", "WebRTC", "Push Notifications"],
+    "summary": "Smart access app allowing residents to remotely open building doors and gates. Supports high-quality audio/video calls with visitors and syncs with property managers. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "100+", "verified": true },
+      { "metric": "rating", "value": "5.0", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — access / Intercom",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "sprng-entryphone",
+    "title": "SPRNG Entryphone",
+    "service_pillars": ["mobile_native"],
+    "industries": ["proptech", "access-control", "security"],
+    "tech_tags": ["Android Native", "Kotlin", "IoT Integration", "VoIP", "Push Notifications"],
+    "summary": "Professional access control and visitor management system for residential and commercial spaces. Streamlines remote entry authorization and building security. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "50+", "verified": true },
+      { "metric": "rating", "value": "5.0", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — access / Entryphone",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "ritespire-content-web",
+    "title": "Ritespire Content",
+    "service_pillars": ["web_saas"],
+    "industries": ["content-marketing", "agency", "seo"],
+    "tech_tags": ["WordPress", "Elementor", "PHP", "SEO Optimization"],
+    "summary": "A professional content writing agency website based in Ahmedabad, India. Designed for showcasing SEO-friendly, result-driven content services with interactive business client layouts. Portfolio web project (not framed as a named agency client engagement).",
+    "outcomes": [],
+    "anonymized_label": "Portfolio project — web",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "ringtone-shuffle",
+    "title": "Ringtone Shuffle",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "utilities"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Audio Manager", "BroadcastReceiver"],
+    "summary": "An automated utility app that shuffles and rotates ringtones for incoming calls. Select multiple tones and let the app dynamically play a different one for each new call. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "10K+", "verified": true },
+      { "metric": "rating", "value": "4.2", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android utility",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "dialogue-book-summary-podcast",
+    "title": "Dialogue: Book Summary Podcast",
+    "service_pillars": ["mobile_cross_platform"],
+    "industries": ["edtech", "audio", "consumer"],
+    "tech_tags": ["Flutter", "Dart", "Audio Streaming", "REST APIs"],
+    "summary": "Innovative audio summary application that turns non-fiction books into engaging conversations between two virtual hosts, enhancing rapid learning and knowledge retention. Shipped Flutter product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "1K+", "verified": true },
+      { "metric": "rating", "value": "5.0", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Flutter",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "pahadi-phere",
+    "title": "Pahadi Phere",
+    "service_pillars": ["mobile_native"],
+    "industries": ["matchmaking", "community"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "REST APIs", "Push Notifications"],
+    "summary": "A secure matchmaking and matrimonial platform tailored specifically for the Uttarakhand and Pahadi communities worldwide. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "1K+", "verified": true },
+      { "metric": "rating", "value": "4.7", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "bio-anatoner-constipation",
+    "title": "Bio-Anatoner Constipation",
+    "service_pillars": ["healthcare_medtech", "mobile_native"],
+    "industries": ["healthcare", "medtech", "digital-therapeutics"],
+    "tech_tags": ["Godot Engine", "Android Native", "Kotlin", "C#", "Biofeedback"],
+    "summary": "An interactive healthcare application using gamified biofeedback therapy models to guide patients through pelvic floor training to treat constipation. Status on portfolio: [Ongoing Project]. No download or rating claims published. Portfolio project (not framed as a named agency client).",
+    "outcomes": [],
+    "anonymized_label": "Portfolio project — healthcare (ongoing)",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "bio-anatoner-fecal-incontinence",
+    "title": "Bio-Anatoner Fecal Incontinence",
+    "service_pillars": ["healthcare_medtech", "mobile_native"],
+    "industries": ["healthcare", "medtech", "digital-therapeutics"],
+    "tech_tags": ["Godot Engine", "Android Native", "Kotlin", "C#", "Healthcare Tech"],
+    "summary": "A digital therapeutic mobile application designed for fecal incontinence rehabilitation. Employs Godot-rendered real-time biofeedback visualizations. Status on portfolio: [Ongoing Project]. No download or rating claims published. Portfolio project (not framed as a named agency client).",
+    "outcomes": [],
+    "anonymized_label": "Portfolio project — healthcare (ongoing)",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "bio-anatoner-urinary-incontinence",
+    "title": "Bio-Anatoner Urinary Incontinence",
+    "service_pillars": ["healthcare_medtech", "mobile_native"],
+    "industries": ["healthcare", "medtech", "digital-therapeutics"],
+    "tech_tags": ["Godot Engine", "Android Native", "Kotlin", "C#", "Biofeedback"],
+    "summary": "Healthcare rehabilitation app aiming to manage urinary incontinence through customized pelvic muscle exercises and real-time gaming-based visual feedback. Status on portfolio: [Ongoing Project]. No download or rating claims published. Portfolio project (not framed as a named agency client).",
+    "outcomes": [],
+    "anonymized_label": "Portfolio project — healthcare (ongoing)",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "anorectal-manometry-tablet",
+    "title": "Anorectal Manometry (Tablet Version)",
+    "service_pillars": ["healthcare_medtech", "mobile_native"],
+    "industries": ["healthcare", "medtech", "diagnostics"],
+    "tech_tags": ["Godot Engine", "Android Native", "Kotlin", "Bluetooth LE", "Data Vis"],
+    "summary": "Tablet-optimized medical diagnostic application tracking and visualizing anorectal pressure recordings. Built on top of Godot Engine to render live charts. Status on portfolio: [Ongoing Project]. No download or rating claims published. Portfolio project (not framed as a named agency client).",
+    "outcomes": [],
+    "anonymized_label": "Portfolio project — healthcare diagnostics (ongoing)",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "daily-habit-tracker",
+    "title": "Daily Habit Tracker",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "productivity", "wellness"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Local Storage", "WorkManager"],
+    "summary": "Set goals, beat procrastination, and build healthy habits. Track your habit streaks, schedule alerts, and monitor progress over time. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "100K+", "verified": true },
+      { "metric": "rating", "value": "3.8", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — scale Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "focushub-study-timer",
+    "title": "FocusHub — Study Timer",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "productivity", "education"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Timer APIs", "Charts & Analytics"],
+    "summary": "A productivity study timer app featuring custom Pomodoro sessions, detailed statistics, and a day planner to keep you focused. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "10K+", "verified": true },
+      { "metric": "rating", "value": "3.9", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  },
+  {
+    "slug": "tomato-timer-pomodoro",
+    "title": "Tomato Timer — Pomodoro",
+    "service_pillars": ["mobile_native"],
+    "industries": ["consumer", "productivity"],
+    "tech_tags": ["Android Native", "Kotlin", "Java", "Background Services", "Vibration API"],
+    "summary": "A beautiful, minimalist Pomodoro timer app designed to boost concentration, manage break schedules, and increase productivity in your daily study or work. Shipped Android product listed on the public portfolio (not framed as a named agency client).",
+    "outcomes": [
+      { "metric": "downloads", "value": "100K+", "verified": true },
+      { "metric": "rating", "value": "4.1", "verified": true }
+    ],
+    "anonymized_label": "Portfolio product — scale Android",
+    "source_url": "https://kailash-chavda.github.io/#projects"
+  }
+]

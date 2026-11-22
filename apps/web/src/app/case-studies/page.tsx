@@ -13,12 +13,14 @@ export default async function CaseStudiesPage() {
     embedding_status: string;
     anonymized_label: string | null;
     client_name: string | null;
+    source_url: string | null;
   }> = [];
   let error: string | null = null;
 
   try {
     const result = await query<(typeof rows)[number]>(`
-      SELECT id, slug, title, approved, embedding_status, anonymized_label, client_name
+      SELECT id, slug, title, approved, embedding_status, anonymized_label,
+             client_name, source_url
       FROM case_studies
       WHERE archived_at IS NULL
       ORDER BY created_at DESC
@@ -35,7 +37,8 @@ export default async function CaseStudiesPage() {
       <p className="lede">
         RAG source of truth. Create unapproved, then approve to publish.
         Outcomes stay empty until approval. Copywriter only uses{" "}
-        <code>approved=true</code> rows.
+        <code>approved=true</code> rows. Seed portfolio facts with{" "}
+        <code>npm run seed:case-studies</code>.
       </p>
       {error ? <div className="flash error">{error}</div> : null}
       <CaseStudyForm />
@@ -44,6 +47,7 @@ export default async function CaseStudiesPage() {
           <tr>
             <th>Title</th>
             <th>Label</th>
+            <th>Source</th>
             <th>Approved</th>
             <th>Embed</th>
             <th />
@@ -57,6 +61,15 @@ export default async function CaseStudiesPage() {
                 <div className="meta">{r.slug}</div>
               </td>
               <td>{r.anonymized_label ?? r.client_name ?? "—"}</td>
+              <td>
+                {r.source_url ? (
+                  <a href={r.source_url} target="_blank" rel="noreferrer">
+                    portfolio
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </td>
               <td>{r.approved ? "yes" : "no"}</td>
               <td>{r.embedding_status}</td>
               <td>

@@ -27,11 +27,24 @@ cp .env.example .env
 docker compose up -d
 npm install
 npm run db:migrate   # applies supabase/migrations/*.sql (creates outreach_items, etc.)
+npm run seed:case-studies   # optional: approved portfolio case studies
 npm run build
 npm run dev:web
 ```
 
-`db:migrate` reads `DATABASE_URL` from the environment or `.env` (default `postgresql://aibde:aibde@localhost:5432/aibde`). It must print `ok 001_initial.sql` and list `outreach_items` among tables. If an earlier failed run left an empty `schema_migrations` row bookkeeping table only, re-run `npm run db:migrate` after pulling this fix.
+`db:migrate` reads `DATABASE_URL` from the environment or `.env` (default `postgresql://aibde:aibde@localhost:5432/aibde`). It must print `ok 001_initial.sql` (and `ok 002_case_study_source_url.sql` on first run) and list `outreach_items` among tables. If an earlier failed run left an empty `schema_migrations` row bookkeeping table only, re-run `npm run db:migrate` after pulling this fix.
+
+### Seed portfolio case studies
+
+Facts-only seed from [kailash-chavda.github.io/#projects](https://kailash-chavda.github.io/#projects) → `scripts/data/portfolio-case-studies.json`. Rows are inserted as **`approved=true`** with `source_url`, portfolio download/rating outcomes only where stated on the page, `client_name=null`, and a Phase 1 embed stub (`embedding_status=ready` when `EMBEDDING_PROVIDER=stub`). Idempotent on `slug`.
+
+```bash
+docker compose up -d          # local Docker Postgres on :5432
+npm run db:migrate            # includes source_url column
+npm run seed:case-studies     # upserts approved case studies
+```
+
+Skipped from seed (unpublished on the portfolio page): Aio, CityPlus, GShort, Daily Task. No ecommerce/ERP mappings — none of the curated projects fit those pillars on the source page.
 
 Optional dispatcher (dry-run logs sends when `SMTP_HOST` is unset):
 
@@ -43,7 +56,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Smoke path
 
-1. **Create + approve a case study** (dashboard `/case-studies` or API) so drafts can cite a real `case_study_id`.
+1. **Case studies**: run `npm run seed:case-studies`, or create + approve on `/case-studies` / API, so drafts can cite a real `case_study_id`.
 2. **Import a lead**:
 
 ```bash

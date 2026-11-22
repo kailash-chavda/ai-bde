@@ -5,7 +5,8 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const { rows } = await query(
     `SELECT id, slug, title, service_pillars, industries, tech_tags, summary,
-            outcomes, client_name, anonymized_label, approved, embedding_status, created_at
+            outcomes, client_name, anonymized_label, source_url, approved,
+            embedding_status, created_at
      FROM case_studies
      WHERE archived_at IS NULL
      ORDER BY created_at DESC`,
@@ -26,9 +27,9 @@ export async function POST(req: Request) {
   const { rows } = await query<{ id: string }>(
     `INSERT INTO case_studies (
        slug, title, service_pillars, industries, tech_tags, summary,
-       outcomes, client_name, anonymized_label, approved
+       outcomes, client_name, anonymized_label, source_url, approved
      ) VALUES (
-       $1, $2, $3::service_pillar[], $4, $5, $6, '[]'::jsonb, $7, $8, false
+       $1, $2, $3::service_pillar[], $4, $5, $6, '[]'::jsonb, $7, $8, $9, false
      )
      RETURNING id`,
     [
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
       parsed.data.summary,
       parsed.data.client_name ?? null,
       parsed.data.anonymized_label ?? null,
+      parsed.data.source_url ?? null,
     ],
   );
 
