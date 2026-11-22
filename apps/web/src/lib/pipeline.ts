@@ -45,9 +45,11 @@ async function loadApprovedCaseStudies(
     outcomes: ApprovedCaseStudy["outcomes"];
     client_name: string | null;
     anonymized_label: string | null;
+    source_url: string | null;
   }>(
     `SELECT id, slug, title, service_pillars::text[] AS service_pillars,
-            industries, tech_tags, summary, outcomes, client_name, anonymized_label
+            industries, tech_tags, summary, outcomes, client_name,
+            anonymized_label, source_url
      FROM case_studies
      WHERE approved = true AND archived_at IS NULL
        AND ($1::text IS NULL OR $1::service_pillar = ANY(service_pillars))

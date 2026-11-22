@@ -285,6 +285,8 @@ export const CaseStudyCreateSchema = z.object({
     .default([]),
   client_name: z.string().nullable().optional(),
   anonymized_label: z.string().nullable().optional(),
+  /** Public portfolio / source URL for claim grounding */
+  source_url: z.string().url().nullable().optional(),
 });
 export type CaseStudyCreate = z.infer<typeof CaseStudyCreateSchema>;
 
@@ -305,6 +307,7 @@ export const ApprovedCaseStudySchema = z.object({
   ),
   client_name: z.string().nullable(),
   anonymized_label: z.string().nullable(),
+  source_url: z.string().nullable().optional(),
   approved: z.literal(true),
 });
 export type ApprovedCaseStudy = z.infer<typeof ApprovedCaseStudySchema>;

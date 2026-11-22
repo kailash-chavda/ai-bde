@@ -25,6 +25,7 @@ export function CaseStudyForm() {
     setError(null);
     const fd = new FormData(e.currentTarget);
     const pillar = String(fd.get("pillar") ?? "");
+    const sourceUrl = String(fd.get("source_url") ?? "").trim();
     const payload = {
       slug: String(fd.get("slug") ?? ""),
       title: String(fd.get("title") ?? ""),
@@ -41,6 +42,7 @@ export function CaseStudyForm() {
       outcomes: [] as [],
       client_name: null,
       anonymized_label: String(fd.get("anonymized_label") ?? "") || null,
+      source_url: sourceUrl || null,
     };
 
     try {
@@ -98,6 +100,14 @@ export function CaseStudyForm() {
       <label>
         Tech tags (comma-separated)
         <input name="tech_tags" placeholder="React Native, Node.js" />
+      </label>
+      <label>
+        Source URL (portfolio / public proof)
+        <input
+          name="source_url"
+          type="url"
+          placeholder="https://kailash-chavda.github.io/#projects"
+        />
       </label>
       <label>
         Summary (approved copy only — no invented metrics)
