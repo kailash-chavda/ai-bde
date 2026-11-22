@@ -188,3 +188,18 @@ export const redisKeys = {
   lockLead: (leadId: string) => `lock:lead:${leadId}`,
   lockSend: (idempotencyKey: string) => `lock:send:${idempotencyKey}`,
 } as const;
+
+export {
+  SEQUENCE_PAUSE_REASONS,
+  TERMINAL_PAUSE_REASONS,
+  HIGH_INTENT_CLASSIFICATIONS,
+  addBusinessDays,
+  computeScheduledAt,
+  getNextEmailStep,
+  getStep,
+  isHighIntentClassification,
+  isResumablePause,
+  parseSequenceSteps,
+  selectEmailTemplateId,
+  type SequencePauseReason,
+} from "./sequences.js";

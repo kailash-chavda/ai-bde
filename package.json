@@ -2,7 +2,7 @@
   "name": "ai-bde",
   "private": true,
   "version": "0.1.0",
-  "description": "AI Business Development Executive platform — Phase 1",
+  "description": "AI Business Development Executive platform — Phase 2 (email sequences)",
   "workspaces": [
     "apps/*",
     "packages/*",

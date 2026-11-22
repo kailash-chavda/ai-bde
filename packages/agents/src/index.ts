@@ -22,7 +22,11 @@ export {
   validateCopywriterGrounding,
   wordCount,
 } from "./grounding.js";
-export { runTriageAgentStub } from "./triage.js";
+export {
+  runTriageAgentStub,
+  classifyReplyStub,
+} from "./triage.js";
+export type { PriorTouch } from "./copywriter.js";
 export {
   runCrmSyncStub,
   type CrmSyncRequest,

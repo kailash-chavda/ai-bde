@@ -2,7 +2,11 @@ import {
   runCopywriterAgentAsync,
   runResearchAgentAsync,
 } from "@ai-bde/agents";
-import { planTransition } from "@ai-bde/orchestrator";
+import {
+  parseSequenceSteps,
+  planTransition,
+  selectEmailTemplateId,
+} from "@ai-bde/orchestrator";
 import {
   normalizeDomain,
   type ApprovedCaseStudy,
@@ -12,7 +16,6 @@ import {
 import { createHash } from "node:crypto";
 import { query } from "./db";
 
-const DEFAULT_TEMPLATE_ID = "11111111-1111-1111-1111-111111111111";
 const DEFAULT_INBOX_ID = "22222222-2222-2222-2222-222222222222";
 
 export async function checkSuppression(input: {
@@ -208,11 +211,33 @@ export async function ingestLead(input: {
     const approved = await loadApprovedCaseStudies(
       research.profile.matched_service_pillar,
     );
+
+    const templateId = selectEmailTemplateId(
+      research.profile.tier ?? input.ingest.tier_hint,
+    );
+    const templateRow = await query<{ steps: unknown }>(
+      `SELECT steps FROM sequence_templates WHERE id = $1 AND active = true`,
+      [templateId],
+    );
+    const steps = parseSequenceSteps(
+      templateRow.rows[0]?.steps ?? [
+        {
+          step_index: 1,
+          channel: "email",
+          delay_business_days: 0,
+          template_key: "cold_email_1",
+          requires_hitl: true,
+        },
+      ],
+    );
+    const step1 = steps.find((s) => s.step_index === 1) ?? steps[0]!;
+
     const copy = await runCopywriterAgentAsync({
       leadId,
       profile: research.profile,
       approvedCaseStudies: approved,
       stepIndex: 1,
+      templateKey: step1.template_key,
       requireUnsubscribe: true,
     });
 
@@ -246,7 +271,7 @@ export async function ingestLead(input: {
       `INSERT INTO lead_sequences (lead_id, template_id, status, current_step)
        VALUES ($1, $2, 'active', 1)
        RETURNING id`,
-      [leadId, DEFAULT_TEMPLATE_ID],
+      [leadId, templateId],
     );
 
     await query(
@@ -279,7 +304,7 @@ export async function ingestLead(input: {
     });
     await query(
       `UPDATE leads SET state = $2, sequence_template_id = $3, updated_at = now() WHERE id = $1`,
-      [leadId, queued.to, DEFAULT_TEMPLATE_ID],
+      [leadId, queued.to, templateId],
     );
     await query(
       `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)

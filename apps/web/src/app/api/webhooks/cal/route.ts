@@ -1,9 +1,14 @@
-import { planTransition } from "@ai-bde/orchestrator";
+import {
+  SEQUENCE_PAUSE_REASONS,
+  planTransition,
+} from "@ai-bde/orchestrator";
 import { query } from "@/lib/db";
+import { pauseLeadSequence } from "@/lib/sequences";
+import { sendDiscordAlert } from "@/lib/discord";
 import { NextResponse } from "next/server";
 
 /**
- * Cal.com webhook — booking.created → DiscoveryBooked
+ * Cal.com webhook stub — booking.created → DiscoveryBooked + pause/cancel sequence.
  * Match via metadata.lead_id or attendee email.
  */
 export async function POST(req: Request) {
@@ -11,7 +16,6 @@ export async function POST(req: Request) {
   if (secret) {
     const header = req.headers.get("x-cal-signature-256") ?? "";
     if (header !== secret) {
-      // Phase 1: simple shared-secret compare; upgrade to HMAC verify later
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }
@@ -51,8 +55,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const lead = await query<{ state: string }>(
-    `SELECT state::text AS state FROM leads WHERE id = $1`,
+  const lead = await query<{ state: string; company: string }>(
+    `SELECT state::text AS state, company FROM leads WHERE id = $1`,
     [leadId],
   );
   const from = lead.rows[0]?.state;
@@ -60,7 +64,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   }
 
-  // Spec §1.4: DiscoveryBooked from Contacted (calendar) or Replied
   const allowedFrom = ["Contacted", "Replied"] as const;
   if (!allowedFrom.includes(from as (typeof allowedFrom)[number])) {
     return NextResponse.json({
@@ -80,13 +83,8 @@ export async function POST(req: Request) {
   await query("BEGIN");
   try {
     await query(
-      `UPDATE leads SET state = $2, pause_reason = 'calendar_booked', updated_at = now() WHERE id = $1`,
-      [leadId, t.to],
-    );
-    await query(
-      `UPDATE lead_sequences SET status = 'cancelled', paused_at = now()
-       WHERE lead_id = $1 AND status = 'active'`,
-      [leadId],
+      `UPDATE leads SET state = $2, pause_reason = $3, updated_at = now() WHERE id = $1`,
+      [leadId, t.to, SEQUENCE_PAUSE_REASONS.calendar],
     );
     await query(
       `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
@@ -98,6 +96,24 @@ export async function POST(req: Request) {
     await query("ROLLBACK");
     throw err;
   }
+
+  // Cancel sequence + clear Redis ZSET members
+  await pauseLeadSequence({
+    leadId,
+    reason: SEQUENCE_PAUSE_REASONS.calendar,
+    actor: "system:cal.com",
+    cancel: true,
+    alert: false,
+  });
+
+  await sendDiscordAlert({
+    kind: "calendar_booked",
+    text: `Discovery booked: ${lead.rows[0]?.company ?? leadId}`,
+    fields: {
+      lead_id: leadId,
+      booking_uid: body.payload?.uid ?? null,
+    },
+  });
 
   return NextResponse.json({ ok: true, leadId, state: "DiscoveryBooked" });
 }
