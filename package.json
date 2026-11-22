@@ -10,10 +10,11 @@
   ],
   "scripts": {
     "build": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/ingest-discover && npm run build -w @ai-bde/dispatcher && npm run build -w @ai-bde/web",
+    "build:discover-deps": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents",
     "typecheck": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/ingest-discover && npm run typecheck -w @ai-bde/dispatcher && npm run typecheck -w @ai-bde/web",
     "dev:web": "npm run dev -w @ai-bde/web",
     "dev:dispatcher": "npm run dev -w @ai-bde/dispatcher",
-    "discover:ingest": "npm run run:once -w @ai-bde/ingest-discover",
+    "discover:ingest": "npm run build:discover-deps && npm run run:once -w @ai-bde/ingest-discover",
     "db:migrate": "node scripts/migrate.mjs",
     "seed:case-studies": "node scripts/seed-case-studies.mjs"
   },

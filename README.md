@@ -107,12 +107,22 @@ Default source is **mock fixtures** under `workers/ingest-discover/fixtures/job-
 
 ### Run Discover locally
 
+`@ai-bde/schemas` (and agents) ship compiled `dist/` — gitignored. After pull/clone, rebuild before ingest, or let `discover:ingest` build its deps.
+
 ```bash
 docker compose up -d
 npm run db:migrate          # includes 004_phase2b_discover.sql
-npm run build
-npm run discover:ingest     # fixture fetcher → discover_candidates
+npm run build               # schemas → orchestrator → agents → … (required order)
+npm run discover:ingest     # also runs build:discover-deps, then fixture → discover_candidates
 npm run dev:web
+```
+
+If you see `does not provide an export named 'JobBoardSignalSchema'`, dist is stale/missing — rebuild then re-run:
+
+```bash
+npm run build
+# or minimal: npm run build -w @ai-bde/schemas   # (discover:ingest also rebuilds orchestrator + agents)
+npm run discover:ingest
 ```
 
 Open [http://localhost:3000/discover](http://localhost:3000/discover):
@@ -125,7 +135,7 @@ Open [http://localhost:3000/discover](http://localhost:3000/discover):
 CLI / API alternatives:
 
 ```bash
-# one-shot worker (fixture)
+# one-shot worker (fixture); rebuilds schemas/orchestrator/agents first
 DISCOVER_SOURCE_KIND=fixture npm run discover:ingest
 
 # via API while web is running

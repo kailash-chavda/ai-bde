@@ -8,19 +8,22 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./ingest": {
       "types": "./dist/ingest.d.ts",
-      "import": "./dist/ingest.js"
+      "import": "./dist/ingest.js",
+      "default": "./dist/ingest.js"
     },
     "./fetcher": {
       "types": "./dist/fetcher.d.ts",
-      "import": "./dist/fetcher.js"
+      "import": "./dist/fetcher.js",
+      "default": "./dist/fetcher.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -b tsconfig.json --force",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
