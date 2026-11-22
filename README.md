@@ -84,8 +84,8 @@ Copy `.env.example` → `.env` and fill what you need.
 
 1. In Discord: open the target server → **Server Settings → Integrations → Webhooks → New Webhook**.
 2. Pick a channel, click **Copy Webhook URL**.
-3. Put it in `.env` as `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...`.
-4. Restart `npm run dev:web`.
+3. Put it in the **repo root** `.env` as `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...` (same file as `DATABASE_URL`). `apps/web/next.config.ts` loads that root file into the Next process — putting the var only under `apps/web/` is optional.
+4. **Restart** `npm run dev:web` after changing `.env` (Next does not hot-reload new env keys). Confirm the terminal no longer prints `[discord:skip]` on promote/approve.
 5. Alerts fire on:
    - **HITL approve** → item enqueued to `seq:due` / dispatcher
    - **High-intent inbound reply** stub (`interested_discovery_call`, portfolio, budget, referral)
