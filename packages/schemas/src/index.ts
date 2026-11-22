@@ -313,6 +313,105 @@ export const ApprovedCaseStudySchema = z.object({
 export type ApprovedCaseStudy = z.infer<typeof ApprovedCaseStudySchema>;
 
 export const ENRICHMENT_VERSION = "1.0.0";
+/** Bumped when website enrichment / job-signal paths change scoring inputs */
+export const ENRICHMENT_VERSION_DISCOVER = "1.1.0";
+
+export const DiscoverSourceKindSchema = z.enum([
+  "fixture",
+  "rss",
+  "job_board_api",
+]);
+export type DiscoverSourceKind = z.infer<typeof DiscoverSourceKindSchema>;
+
+export const DiscoverStatusSchema = z.enum([
+  "pending",
+  "promoted",
+  "dismissed",
+]);
+export type DiscoverStatus = z.infer<typeof DiscoverStatusSchema>;
+
+export const HiringSignalTagSchema = z.enum([
+  "mobile_hiring",
+  "fullstack_hiring",
+  "engineering_bottleneck",
+  "contract_or_agency_language",
+  "backfill",
+]);
+export type HiringSignalTag = z.infer<typeof HiringSignalTagSchema>;
+
+/** Raw hiring signal from a job board / RSS feed (pre-candidate) */
+export const JobBoardSignalSchema = z.object({
+  external_id: z.string().min(1),
+  company: z.string().min(1),
+  domain: z.string().min(1),
+  job_title: z.string().min(1),
+  job_url: z.string().url().optional(),
+  location: z.string().optional(),
+  geography: GeographySchema.optional(),
+  description: z.string().optional(),
+  posted_at: z.string().optional(),
+  tech_hints: z.array(z.string()).default([]),
+  decision_maker_hint: z
+    .object({
+      full_name: z.string().min(1).optional(),
+      role: z.string().min(1),
+      /** Only when present on a public source — never invent */
+      email: z.string().email().optional(),
+      linkedin_url: z.string().url().optional(),
+    })
+    .optional(),
+  source: SourceRefSchema,
+});
+export type JobBoardSignal = z.infer<typeof JobBoardSignalSchema>;
+
+export const WebsiteEnrichmentSchema = z.object({
+  domain: z.string().min(1),
+  fetched: z.boolean(),
+  tech_hints: z.array(z.string()).default([]),
+  snippets: z.array(z.string()).default([]),
+  sources: z.array(SourceRefSchema).default([]),
+  skipped_reason: z.string().optional(),
+});
+export type WebsiteEnrichment = z.infer<typeof WebsiteEnrichmentSchema>;
+
+export const DiscoverCandidateSchema = z.object({
+  id: z.string().uuid().optional(),
+  external_id: z.string().min(1),
+  source_kind: DiscoverSourceKindSchema,
+  company: z.string().min(1),
+  domain: z.string().min(1),
+  job_title: z.string().min(1),
+  job_url: z.string().url().optional().nullable(),
+  location: z.string().optional().nullable(),
+  geography: GeographySchema.optional().nullable(),
+  hiring_signals: z.array(HiringSignalSchema).default([]),
+  tech_hints: z.array(z.string()).default([]),
+  sources: z.array(SourceRefSchema).min(1),
+  confidence_score: z.number().min(0).max(1),
+  website_enrichment: WebsiteEnrichmentSchema.optional().nullable(),
+  decision_maker_hint: z
+    .object({
+      full_name: z.string().optional(),
+      role: z.string().min(1),
+      email: z.string().email().optional(),
+      linkedin_url: z.string().url().optional(),
+    })
+    .optional()
+    .nullable(),
+  status: DiscoverStatusSchema.default("pending"),
+  promoted_lead_id: z.string().uuid().optional().nullable(),
+});
+export type DiscoverCandidate = z.infer<typeof DiscoverCandidateSchema>;
+
+/** Promote a Discover candidate into the lead pipeline (HITL still owns first send) */
+export const DiscoverPromoteSchema = z.object({
+  /** Human-supplied contact — required for ICP; never auto-invented */
+  decision_maker: DecisionMakerSchema,
+  geography: GeographySchema.optional(),
+  tier_hint: LeadTierSchema.optional(),
+  notes: z.string().optional(),
+});
+export type DiscoverPromote = z.infer<typeof DiscoverPromoteSchema>;
 
 /** One step in sequence_templates.steps JSONB (email-only in Phase 2 slice A) */
 export const SequenceTemplateStepSchema = z.object({

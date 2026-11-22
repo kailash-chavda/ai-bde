@@ -1,6 +1,7 @@
 import {
   runCopywriterAgentAsync,
   runResearchAgentAsync,
+  runResearchWithWebsiteEnrichment,
 } from "@ai-bde/agents";
 import {
   parseSequenceSteps,
@@ -12,6 +13,8 @@ import {
   type ApprovedCaseStudy,
   type LeadIngest,
   type LeadSource,
+  type SourceRef,
+  type WebsiteEnrichment,
 } from "@ai-bde/schemas";
 import { createHash } from "node:crypto";
 import { query } from "./db";
@@ -72,6 +75,12 @@ export async function ingestLead(input: {
   ingest: LeadIngest;
   source: LeadSource;
   actor?: string;
+  /** Job-post / website SourceRefs stored on AgencyLeadProfile.sources */
+  extraSources?: SourceRef[];
+  websiteEnrichment?: WebsiteEnrichment | null;
+  /** Run company-website enrichment hook before research (Discover promote) */
+  runWebsiteEnrichment?: boolean;
+  fixtureOnlyWebsite?: boolean;
 }): Promise<{ leadId: string; deduped: boolean; state: string }> {
   const domain = normalizeDomain(input.ingest.domain);
   const externalId =
@@ -138,10 +147,18 @@ export async function ingestLead(input: {
       [leadId, input.actor ?? "system:ingest"],
     );
 
-    const research = await runResearchAgentAsync({
+    const researchInput = {
       ingest: { ...input.ingest, domain },
       sourceLabel: `ingest:${input.source}`,
-    });
+      extraSources: input.extraSources,
+      websiteEnrichment: input.websiteEnrichment,
+    };
+    const research = input.runWebsiteEnrichment
+      ? await runResearchWithWebsiteEnrichment({
+          ...researchInput,
+          fixtureOnlyWebsite: input.fixtureOnlyWebsite ?? true,
+        })
+      : await runResearchAgentAsync(researchInput);
 
     await query(
       `INSERT INTO agent_runs (lead_id, agent, input_hash, output, model, status)

@@ -1,0 +1,131 @@
+[
+  {
+    "external_id": "fixture-northwind-rn-2026-11",
+    "company": "Northwind Health",
+    "domain": "northwindhealth.com",
+    "job_title": "Senior React Native Engineer",
+    "job_url": "https://jobs.example.com/northwind-health/react-native",
+    "location": "Remote (US)",
+    "geography": "US",
+    "description": "Build HIPAA-ready patient apps in React Native. Team is stretched — contract-friendly for delivery capacity.",
+    "posted_at": "2026-11-10T12:00:00.000Z",
+    "tech_hints": ["react native", "hipaa"],
+    "decision_maker_hint": {
+      "role": "VP Engineering"
+    },
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/northwind-health/react-native",
+      "title": "Senior React Native Engineer — Northwind Health",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "HIPAA-ready patient apps in React Native; contract-friendly."
+    }
+  },
+  {
+    "external_id": "fixture-river-flutter-2026-11",
+    "company": "River Mobile",
+    "domain": "rivermobile.io",
+    "job_title": "Flutter Mobile Developer",
+    "job_url": "https://jobs.example.com/river-mobile/flutter",
+    "location": "Remote (UK/EU)",
+    "geography": "UK",
+    "description": "Expand our Flutter consumer apps for iOS and Android. Looking for full-time or agency partner capacity.",
+    "posted_at": "2026-11-12T09:00:00.000Z",
+    "tech_hints": ["flutter", "ios", "android"],
+    "decision_maker_hint": {
+      "role": "CTO"
+    },
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/river-mobile/flutter",
+      "title": "Flutter Mobile Developer — River Mobile",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "Flutter consumer apps; agency partner capacity welcome."
+    }
+  },
+  {
+    "external_id": "fixture-stackforge-fs-2026-11",
+    "company": "Stackforge",
+    "domain": "stackforge.dev",
+    "job_title": "Full-Stack Engineer (Next.js / Node)",
+    "job_url": "https://jobs.example.com/stackforge/fullstack",
+    "location": "Remote (US)",
+    "geography": "US",
+    "description": "Own SaaS features end-to-end with Next.js and Node.js. Engineering bottleneck on roadmap delivery.",
+    "posted_at": "2026-11-14T15:30:00.000Z",
+    "tech_hints": ["next.js", "node", "react", "saas"],
+    "decision_maker_hint": {
+      "role": "Founder"
+    },
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/stackforge/fullstack",
+      "title": "Full-Stack Engineer — Stackforge",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "Next.js / Node SaaS; engineering bottleneck on roadmap."
+    }
+  },
+  {
+    "external_id": "fixture-carepath-rn-2026-11",
+    "company": "CarePath Apps",
+    "domain": "carepathapps.com",
+    "job_title": "React Native MedTech Engineer",
+    "job_url": "https://jobs.example.com/carepath/react-native-medtech",
+    "location": "Remote (US)",
+    "geography": "US",
+    "description": "Ship clinical mobile experiences with React Native. HIPAA / MedTech compliance experience preferred. Backfill for parental leave.",
+    "posted_at": "2026-11-16T11:00:00.000Z",
+    "tech_hints": ["react native", "hipaa", "medtech"],
+    "decision_maker_hint": {
+      "role": "VP Product"
+    },
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/carepath/react-native-medtech",
+      "title": "React Native MedTech Engineer — CarePath Apps",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "Clinical mobile React Native; HIPAA; backfill."
+    }
+  },
+  {
+    "external_id": "fixture-orbit-ecommerce-2026-11",
+    "company": "Orbit Commerce",
+    "domain": "orbitcommerce.com",
+    "job_title": "Full Stack Engineer — Headless Ecommerce",
+    "job_url": "https://jobs.example.com/orbit/fullstack-ecommerce",
+    "location": "Remote (APAC)",
+    "geography": "APAC",
+    "description": "React + Node storefronts on Shopify. Contract / agency language OK for peak season capacity.",
+    "posted_at": "2026-11-18T08:00:00.000Z",
+    "tech_hints": ["react", "node", "shopify", "ecommerce"],
+    "decision_maker_hint": {
+      "role": "Director of Engineering"
+    },
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/orbit/fullstack-ecommerce",
+      "title": "Full Stack Engineer — Orbit Commerce",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "Headless ecommerce React/Node/Shopify; agency OK."
+    }
+  },
+  {
+    "external_id": "fixture-ignore-sales-2026-11",
+    "company": "Acme Sales Co",
+    "domain": "acmesales.example.com",
+    "job_title": "Account Executive",
+    "job_url": "https://jobs.example.com/acme-sales/ae",
+    "location": "NYC",
+    "geography": "US",
+    "description": "Enterprise SaaS sales role — not an engineering hire.",
+    "posted_at": "2026-11-19T10:00:00.000Z",
+    "tech_hints": [],
+    "source": {
+      "type": "job_post",
+      "url": "https://jobs.example.com/acme-sales/ae",
+      "title": "Account Executive — Acme Sales Co",
+      "retrieved_at": "2026-11-22T00:00:00.000Z",
+      "snippet": "Sales role — should be filtered out of mobile/fullstack discover."
+    }
+  }
+]

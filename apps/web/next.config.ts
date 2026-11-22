@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     "@ai-bde/schemas",
     "@ai-bde/orchestrator",
     "@ai-bde/agents",
+    "@ai-bde/ingest-discover",
   ],
 };
 
