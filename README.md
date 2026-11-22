@@ -2,7 +2,7 @@
 
 Production-oriented **AI Business Development Executive** platform for a remote-first software agency.
 
-**Phase 1** (this branch): lead ingest → research/ICP → email draft → **HITL approve/reject** → dispatcher send (dry-run without SMTP). Postgres is the CRM. Zero invented clients/metrics; copywriter cites only `approved` case studies.
+**Phase 1**: lead ingest → research/ICP → email draft → **HITL approve/reject** → dispatcher send (dry-run without SMTP). Postgres is the CRM. Zero invented clients/metrics; copywriter cites only `approved` case studies. Optional OpenAI-compatible LLM enhances research/copy with fail-closed grounding.
 
 ## Monorepo layout
 
@@ -54,10 +54,53 @@ npm run dev:dispatcher
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Environment variables
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `DATABASE_URL` | yes | Postgres connection |
+| `REDIS_URL` | for dispatcher | Redis |
+| `WEBHOOK_API_KEY` | for webhook | `X-Api-Key` on `/api/leads/webhook` |
+| `HITL_ACTOR` | no | Default HITL actor label |
+| `OPENAI_API_KEY` or `LLM_API_KEY` | no | Enables LLM research + copywriter |
+| `OPENAI_BASE_URL` or `LLM_BASE_URL` | no | OpenAI-compatible base (default `https://api.openai.com/v1`) |
+| `OPENAI_MODEL` or `LLM_MODEL` | no | Chat model (default `gpt-4o-mini`) |
+| `SMTP_*` | no | Real SMTP; unset = dry-run dispatcher |
+| `EMBEDDING_PROVIDER` | no | `stub` (default) until vectors are wired |
+| `CAL_WEBHOOK_SECRET` | no | Cal.com webhook verification |
+
+Copy `.env.example` → `.env` and fill what you need.
+
+### Enable LLM (optional)
+
+1. Set `OPENAI_API_KEY` (or `LLM_API_KEY`) in `.env`.
+2. Optionally set `OPENAI_BASE_URL` / `LLM_BASE_URL` for a compatible proxy, and `OPENAI_MODEL` / `LLM_MODEL`.
+3. Restart `npm run dev:web`.
+4. Import a lead — `agent_runs.model` will show the LLM model when grounding passes, or `deterministic-v1` with `llmFallbackReason` when the model invents clients/metrics or cites unknown `case_study_id`s.
+
+Without a key, Research and Copywriter stay fully deterministic. **HITL remains required before every send** either way.
+
 ## Smoke path
 
 1. **Case studies**: run `npm run seed:case-studies`, or create + approve on `/case-studies` / API, so drafts can cite a real `case_study_id`.
-2. **Import a lead**:
+2. **Import a lead** (dashboard or API):
+
+### Dashboard CSV upload
+
+1. Open [http://localhost:3000/leads](http://localhost:3000/leads).
+2. Under **Import CSV**, choose source (`csv` or `sales_navigator`) and pick a `.csv` file.
+3. Click **Upload & ingest** — the page shows accepted/error rows and refreshes the leads table.
+
+Example CSV:
+
+```csv
+company,domain,decision_maker,email,role,geography,tech,message
+Acme Health,acme.example,Alex Chen,alex@acme.example,CTO,US,React Native,Need HIPAA-ready patient app
+```
+
+### API import
+
+Import a lead via API:
 
 ```bash
 curl -s -X POST http://localhost:3000/api/leads/webhook \
@@ -80,7 +123,7 @@ curl -s -X POST http://localhost:3000/api/leads/webhook \
 3. **Approve** the draft on the HITL queue (home page).
 4. Run the dispatcher to mark send (dry-run) and transition lead → `Contacted`.
 
-CSV / Sales Navigator — flat `rows` (CSV-style) or nested `leads`:
+CSV / Sales Navigator JSON — flat `rows` or nested `leads`:
 
 ```bash
 curl -s -X POST http://localhost:3000/api/leads/import \
@@ -144,6 +187,7 @@ curl -s -X POST http://localhost:3000/api/leads/import \
 
 - Never invent clients, metrics, or case studies.
 - Portfolio mentions require a resolvable **approved** `case_study_id`.
+- LLM drafts are validated server-side; violations **fail closed** to `deterministic-v1`.
 - Phase 1: **HITL on all sends**; email channel only.
 - Triage + external CRM are stubs until later phases.
 

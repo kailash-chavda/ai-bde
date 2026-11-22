@@ -1,6 +1,6 @@
 import {
-  runCopywriterAgent,
-  runResearchAgent,
+  runCopywriterAgentAsync,
+  runResearchAgentAsync,
 } from "@ai-bde/agents";
 import { planTransition } from "@ai-bde/orchestrator";
 import {
@@ -135,18 +135,19 @@ export async function ingestLead(input: {
       [leadId, input.actor ?? "system:ingest"],
     );
 
-    const research = runResearchAgent({
+    const research = await runResearchAgentAsync({
       ingest: { ...input.ingest, domain },
       sourceLabel: `ingest:${input.source}`,
     });
 
     await query(
       `INSERT INTO agent_runs (lead_id, agent, input_hash, output, model, status)
-       VALUES ($1, 'research', $2, $3::jsonb, 'deterministic-v1', 'success')`,
+       VALUES ($1, 'research', $2, $3::jsonb, $4, 'success')`,
       [
         leadId,
         createHash("sha256").update(JSON.stringify(input.ingest)).digest("hex"),
         JSON.stringify(research),
+        research.model,
       ],
     );
 
@@ -207,7 +208,7 @@ export async function ingestLead(input: {
     const approved = await loadApprovedCaseStudies(
       research.profile.matched_service_pillar,
     );
-    const copy = runCopywriterAgent({
+    const copy = await runCopywriterAgentAsync({
       leadId,
       profile: research.profile,
       approvedCaseStudies: approved,
@@ -217,13 +218,14 @@ export async function ingestLead(input: {
 
     await query(
       `INSERT INTO agent_runs (lead_id, agent, input_hash, output, model, status)
-       VALUES ($1, 'copywriter', $2, $3::jsonb, 'deterministic-v1', $4)`,
+       VALUES ($1, 'copywriter', $2, $3::jsonb, $4, $5)`,
       [
         leadId,
         createHash("sha256")
           .update(JSON.stringify({ leadId, studies: approved.map((s) => s.id) }))
           .digest("hex"),
         JSON.stringify(copy),
+        copy.model,
         copy.needsHuman && copy.reason?.includes("case_study")
           ? "failed"
           : "success",

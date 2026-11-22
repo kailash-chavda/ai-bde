@@ -58,7 +58,8 @@ export function HitlQueue({ initialItems }: { initialItems: HitlItem[] }) {
       <div className="item">
         <p className="meta" style={{ margin: 0 }}>
           No pending drafts. Import leads via{" "}
-          <code>POST /api/leads/import</code> or webhook.
+          <a href="/leads">CSV upload on Leads</a>,{" "}
+          <code>POST /api/leads/import</code>, or webhook.
         </p>
         {message ? <p className="flash">{message}</p> : null}
       </div>
