@@ -5,7 +5,7 @@ import {
 } from "@ai-bde/orchestrator";
 import { query } from "@/lib/db";
 import { enqueueSeqDue } from "@/lib/redis";
-import { sendSlackAlert } from "@/lib/slack";
+import { sendDiscordAlert } from "@/lib/discord";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -147,7 +147,7 @@ export async function POST(
 
   const zadd = await enqueueSeqDue(itemId, scheduledAt);
 
-  await sendSlackAlert({
+  await sendDiscordAlert({
     kind: "hitl_approve_enqueue",
     text: `HITL approved → send queue: ${lead.rows[0]?.company ?? row.lead_id}`,
     fields: {

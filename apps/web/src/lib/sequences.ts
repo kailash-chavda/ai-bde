@@ -5,8 +5,8 @@ import {
   type SequencePauseReason,
 } from "@ai-bde/orchestrator";
 import { query } from "./db";
+import { sendDiscordAlert } from "./discord";
 import { clearLeadSeqDue, enqueueSeqDue } from "./redis";
-import { sendSlackAlert } from "./slack";
 
 export async function loadLeadOutreachIds(leadId: string): Promise<string[]> {
   const { rows } = await query<{ id: string }>(
@@ -22,7 +22,8 @@ export async function pauseLeadSequence(input: {
   reason: SequencePauseReason | string;
   actor: string;
   cancel?: boolean;
-  alertSlack?: boolean;
+  /** When false, skip Discord alert (caller may send a more specific one). */
+  alert?: boolean;
 }): Promise<{ ok: boolean; status: string }> {
   const status = input.cancel ? "cancelled" : "paused";
 
@@ -56,8 +57,8 @@ export async function pauseLeadSequence(input: {
   const ids = await loadLeadOutreachIds(input.leadId);
   await clearLeadSeqDue(ids);
 
-  if (input.alertSlack !== false) {
-    await sendSlackAlert({
+  if (input.alert !== false) {
+    await sendDiscordAlert({
       kind: "sequence_paused",
       text: `Sequence ${status} for lead ${input.leadId}`,
       fields: { reason: input.reason, actor: input.actor },

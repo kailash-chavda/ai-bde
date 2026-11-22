@@ -2,7 +2,7 @@ import type { InboundReplyEvent, ReplyClassification, Urgency } from "@ai-bde/sc
 
 /**
  * Lightweight reply classification stub (full Triage Agent is Phase 3).
- * Used by inbound webhook to pause sequences + Slack high-intent hooks.
+ * Used by inbound webhook to pause sequences + Discord high-intent hooks.
  */
 export function classifyReplyStub(rawBody: string): {
   classification: ReplyClassification;
@@ -92,7 +92,7 @@ export function classifyReplyStub(rawBody: string): {
 }
 
 /**
- * Phase 2 stub — classifies inbound for pause + Slack hooks.
+ * Phase 2 stub — classifies inbound for pause + Discord hooks.
  * Does not auto-send replies (Phase 3).
  */
 export function runTriageAgentStub(input: {

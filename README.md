@@ -3,7 +3,7 @@
 Production-oriented **AI Business Development Executive** platform for a remote-first software agency.
 
 **Phase 1**: lead ingest → research/ICP → email draft → **HITL approve/reject** → dispatcher send (dry-run without SMTP).  
-**Phase 2 slice A**: adaptive **3–5 step email sequences**, Redis `seq:due` ZSET scheduler, pause on reply/booking/opt-out, Slack webhook alerts, dashboard pause/resume. LinkedIn and multi-inbox rotation are out of scope for this slice.
+**Phase 2 slice A**: adaptive **3–5 step email sequences**, Redis `seq:due` ZSET scheduler, pause on reply/booking/opt-out, Discord webhook alerts, dashboard pause/resume. LinkedIn and multi-inbox rotation are out of scope for this slice.
 
 Postgres is the CRM. Zero invented clients/metrics; copywriter cites only `approved` case studies. Optional OpenAI-compatible LLM enhances research/copy with fail-closed grounding.
 
@@ -63,7 +63,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `REDIS_URL` | for dispatcher / ZSET | Redis (`seq:due`, send locks, caps) |
 | `WEBHOOK_API_KEY` | for webhook | `X-Api-Key` on `/api/leads/webhook` |
 | `HITL_ACTOR` | no | Default HITL actor label |
-| `SLACK_WEBHOOK_URL` | no | Incoming webhook for HITL approve + high-intent replies |
+| `DISCORD_WEBHOOK_URL` | no | Discord Incoming Webhook for HITL approve + high-intent replies |
 | `OPENAI_API_KEY` or `LLM_API_KEY` | no | Enables LLM research + copywriter |
 | `OPENAI_BASE_URL` or `LLM_BASE_URL` | no | OpenAI-compatible base (default `https://api.openai.com/v1`) |
 | `OPENAI_MODEL` or `LLM_MODEL` | no | Chat model (default `gpt-4o-mini`) |
@@ -74,17 +74,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Copy `.env.example` → `.env` and fill what you need.
 
-### Configure Slack alerts
+### Configure Discord alerts
 
-1. In Slack: **Apps → Incoming Webhooks → Add to workspace** (or create via [api.slack.com/messaging/webhooks](https://api.slack.com/messaging/webhooks)).
-2. Copy the webhook URL into `.env` as `SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...`.
-3. Restart `npm run dev:web`.
-4. Alerts fire on:
+1. In Discord: open the target server → **Server Settings → Integrations → Webhooks → New Webhook**.
+2. Pick a channel, click **Copy Webhook URL**.
+3. Put it in `.env` as `DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...`.
+4. Restart `npm run dev:web`.
+5. Alerts fire on:
    - **HITL approve** → item enqueued to `seq:due` / dispatcher
    - **High-intent inbound reply** stub (`interested_discovery_call`, portfolio, budget, referral)
    - Calendar booking and opt-out (best-effort)
 
-Without `SLACK_WEBHOOK_URL`, alerts are logged as `[slack:skip]` and the rest of the flow still works.
+Payload is short `{ "content": "..." }` text (no embeds required). Without `DISCORD_WEBHOOK_URL`, alerts are logged as `[discord:skip]` and the rest of the flow still works.
 
 ## Try a 3-step email sequence locally
 
@@ -110,7 +111,7 @@ curl -s -X POST http://localhost:3000/api/leads/webhook \
   }'
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) → **Approve** step 1. Slack fires if configured; item is `ZADD`’d to `seq:due`.
+4. Open [http://localhost:3000](http://localhost:3000) → **Approve** step 1. Discord fires if configured; item is `ZADD`’d to `seq:due`.
 5. Dispatcher dry-runs the send → lead `Contacted` → **auto-drafts step 2** (HITL pending). Approve step 2 (scheduled +3 business days from last send; for a quick local loop you can wait or set `scheduled_at` via SQL to `now()`).
 6. After each send, the next step is drafted until the template completes (3 or 5 steps).
 7. **Pause / resume** on `/leads/<id>` or:
@@ -125,7 +126,7 @@ curl -s -X POST http://localhost:3000/api/leads/<LEAD_ID>/sequence/resume \
   -H "Content-Type: application/json" -d '{}'
 ```
 
-8. **Simulate a reply** (pauses sequence; high-intent → Slack):
+8. **Simulate a reply** (pauses sequence; high-intent → Discord):
 
 ```bash
 curl -s -X POST http://localhost:3000/api/inbound/reply \
@@ -185,7 +186,7 @@ curl -s -X POST http://localhost:3000/api/webhooks/cal \
 | `POST` | `/api/leads/:id/sequence/pause` | Pause sequence + clear ZSET |
 | `POST` | `/api/leads/:id/sequence/resume` | Resume (non-terminal pauses) |
 | `GET` | `/api/hitl/queue` | Pending drafts |
-| `POST` | `/api/hitl/:itemId/approve` | Approve → Redis `seq:due` + Slack |
+| `POST` | `/api/hitl/:itemId/approve` | Approve → Redis `seq:due` + Discord |
 | `POST` | `/api/hitl/:itemId/reject` | Reject → rewrite |
 | `POST` | `/api/inbound/reply` | Reply/opt-out stub (pause / suppress) |
 | `POST` | `/api/case-studies` | Create (unapproved) |
@@ -201,7 +202,7 @@ curl -s -X POST http://localhost:3000/api/webhooks/cal \
 - Portfolio mentions require a resolvable **approved** `case_study_id`.
 - LLM drafts are validated server-side; violations **fail closed** to `deterministic-v1`.
 - Phase 2 slice A: **HITL on email sends**; email channel only (no LinkedIn).
-- Triage is a classification stub for pause + Slack; full auto-replies are Phase 3.
+- Triage is a classification stub for pause + Discord; full auto-replies are Phase 3.
 
 ## Preferences locked
 

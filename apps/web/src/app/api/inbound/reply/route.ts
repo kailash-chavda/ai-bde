@@ -10,14 +10,14 @@ import {
 import type { LeadState } from "@ai-bde/schemas";
 import { query } from "@/lib/db";
 import { pauseLeadSequence } from "@/lib/sequences";
-import { sendSlackAlert } from "@/lib/slack";
+import { sendDiscordAlert } from "@/lib/discord";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 /**
  * Inbound reply stub (IMAP listener is Phase 3).
  * Pauses sequence on any reply; opt-out → suppression + DoNotContact;
- * high-intent classifications fire Slack when SLACK_WEBHOOK_URL is set.
+ * high-intent classifications fire Discord when DISCORD_WEBHOOK_URL is set.
  */
 const BodySchema = z.object({
   lead_id: z.string().uuid().optional(),
@@ -181,10 +181,10 @@ export async function POST(req: Request) {
       reason: SEQUENCE_PAUSE_REASONS.optOut,
       actor: "system:inbound",
       cancel: true,
-      alertSlack: false,
+      alert: false,
     });
 
-    await sendSlackAlert({
+    await sendDiscordAlert({
       kind: "opt_out",
       text: `Opt-out / unsubscribe: ${lead.rows[0].company}`,
       fields: { lead_id: leadId, inbound_id: inboundId },
@@ -204,7 +204,7 @@ export async function POST(req: Request) {
     reason: SEQUENCE_PAUSE_REASONS.reply,
     actor: "system:inbound",
     cancel: false,
-    alertSlack: false,
+    alert: false,
   });
 
   try {
@@ -237,7 +237,7 @@ export async function POST(req: Request) {
   }
 
   if (isHighIntentClassification(classified.classification)) {
-    await sendSlackAlert({
+    await sendDiscordAlert({
       kind: "high_intent_reply",
       text: `High-intent reply: ${lead.rows[0].company}`,
       fields: {

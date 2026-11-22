@@ -4,7 +4,7 @@ import {
 } from "@ai-bde/orchestrator";
 import { query } from "@/lib/db";
 import { pauseLeadSequence } from "@/lib/sequences";
-import { sendSlackAlert } from "@/lib/slack";
+import { sendDiscordAlert } from "@/lib/discord";
 import { NextResponse } from "next/server";
 
 /**
@@ -103,10 +103,10 @@ export async function POST(req: Request) {
     reason: SEQUENCE_PAUSE_REASONS.calendar,
     actor: "system:cal.com",
     cancel: true,
-    alertSlack: false,
+    alert: false,
   });
 
-  await sendSlackAlert({
+  await sendDiscordAlert({
     kind: "calendar_booked",
     text: `Discovery booked: ${lead.rows[0]?.company ?? leadId}`,
     fields: {

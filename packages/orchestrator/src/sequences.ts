@@ -86,7 +86,7 @@ export function isResumablePause(pauseReason: string | null | undefined): boolea
   return !TERMINAL_PAUSE_REASONS.has(pauseReason);
 }
 
-/** High-intent reply classifications that warrant Slack alerts. */
+/** High-intent reply classifications that warrant Discord alerts. */
 export const HIGH_INTENT_CLASSIFICATIONS = new Set([
   "interested_discovery_call",
   "request_portfolio_case_study",
