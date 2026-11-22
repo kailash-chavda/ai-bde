@@ -1,5 +1,6 @@
 import {
   ENRICHMENT_VERSION,
+  ENRICHMENT_VERSION_DISCOVER,
   GeographySchema,
   normalizeDomain,
   type AgencyLeadProfile,
@@ -10,6 +11,7 @@ import {
   type ServicePillar,
   type SourceRef,
   type TechStackSignal,
+  type WebsiteEnrichment,
 } from "@ai-bde/schemas";
 import { validateResearchGrounding } from "./grounding.js";
 import {
@@ -17,6 +19,7 @@ import {
   chatJson,
   getLlmConfig,
 } from "./llm.js";
+import { enrichFromCompanyWebsite } from "./website-enrichment.js";
 
 const AGENCY_DOMAIN_HINTS = [
   "agency",
@@ -57,6 +60,12 @@ const PILLAR_KEYWORDS: Array<{ pillar: ServicePillar; keywords: string[] }> = [
 export interface ResearchInput {
   ingest: LeadIngest;
   sourceLabel: string;
+  /** Extra SourceRef rows (job post, website enrichment) — never invent emails */
+  extraSources?: SourceRef[];
+  /** Merged into tech/hiring text for pillar + stack detection */
+  websiteEnrichment?: WebsiteEnrichment | null;
+  /** Use discover enrichment version when website/job sources present */
+  enrichmentVersion?: string;
 }
 
 export interface ResearchResult {
@@ -80,7 +89,10 @@ function inferSeniority(
   return "unknown";
 }
 
-function collectText(ingest: LeadIngest): string {
+function collectText(
+  ingest: LeadIngest,
+  website?: WebsiteEnrichment | null,
+): string {
   return [
     ingest.company,
     ingest.message ?? "",
@@ -88,6 +100,8 @@ function collectText(ingest: LeadIngest): string {
     ...(ingest.tech_hints ?? []),
     ...(ingest.hiring_hints ?? []),
     ingest.decision_maker.role,
+    ...(website?.tech_hints ?? []),
+    ...(website?.snippets ?? []),
   ]
     .join(" ")
     .toLowerCase();
@@ -175,8 +189,8 @@ function finalizeDisqualify(profile: AgencyLeadProfile): ResearchResult {
 }
 
 /**
- * Phase 1 Research Agent — deterministic enrichment from provided ingest only.
- * Never invents funding, ratings, or tech not present in sources.
+ * Research Agent — deterministic enrichment from provided ingest + optional
+ * website/job sources. Never invents funding, ratings, emails, or tech.
  */
 export function runResearchAgent(input: ResearchInput): ResearchResult {
   const domain = normalizeDomain(input.ingest.domain);
@@ -188,7 +202,8 @@ export function runResearchAgent(input: ResearchInput): ResearchResult {
     snippet: input.ingest.message ?? input.ingest.notes,
   };
 
-  const text = collectText(input.ingest);
+  const website = input.websiteEnrichment ?? null;
+  const text = collectText(input.ingest, website);
   const dm: DecisionMaker = {
     ...input.ingest.decision_maker,
     seniority:
@@ -222,9 +237,22 @@ export function runResearchAgent(input: ResearchInput): ResearchResult {
   if (matched) confidence += 0.15;
   if (tech.length) confidence += 0.1;
   if (hiring.length) confidence += 0.1;
+  if (website?.fetched) confidence += 0.05;
   confidence = Math.min(1, Math.round(confidence * 1000) / 1000);
 
   const icpPass = icpFailReasons.length === 0 && confidence >= 0.4;
+
+  const sources: SourceRef[] = [
+    source,
+    ...(input.extraSources ?? []),
+    ...(website?.sources ?? []),
+  ];
+
+  const version =
+    input.enrichmentVersion ??
+    (website?.fetched || (input.extraSources?.length ?? 0) > 0
+      ? ENRICHMENT_VERSION_DISCOVER
+      : ENRICHMENT_VERSION);
 
   const profile: AgencyLeadProfile = {
     company: input.ingest.company.trim(),
@@ -236,16 +264,51 @@ export function runResearchAgent(input: ResearchInput): ResearchResult {
     hiring_signals: hiring,
     matched_service_pillar: matched,
     confidence_score: confidence,
-    sources: [source],
+    sources,
     tier: inferTier(input.ingest),
     employee_band: input.ingest.employee_band,
     icp_pass: icpPass,
     icp_fail_reasons: icpFailReasons.length ? icpFailReasons : undefined,
-    enrichment_version: ENRICHMENT_VERSION,
+    enrichment_version: version,
     enriched_at: now,
   };
 
   return finalizeDisqualify(profile);
+}
+
+/**
+ * Research path that also runs the company-website enrichment hook.
+ * Used when promoting Discover candidates into the lead pipeline.
+ */
+export async function runResearchWithWebsiteEnrichment(
+  input: ResearchInput & { fixtureOnlyWebsite?: boolean },
+): Promise<ResearchResult> {
+  const domain = normalizeDomain(input.ingest.domain);
+  const website =
+    input.websiteEnrichment ??
+    (await enrichFromCompanyWebsite(domain, {
+      fixtureOnly: input.fixtureOnlyWebsite ?? true,
+    }));
+
+  const mergedHints = [
+    ...(input.ingest.tech_hints ?? []),
+    ...website.tech_hints,
+  ];
+  const uniqueHints = [...new Set(mergedHints.map((h) => h.toLowerCase()))];
+
+  return runResearchAgentAsync({
+    ...input,
+    ingest: {
+      ...input.ingest,
+      domain,
+      tech_hints: uniqueHints,
+      notes: [input.ingest.notes, ...website.snippets]
+        .filter(Boolean)
+        .join("\n"),
+    },
+    websiteEnrichment: website,
+    enrichmentVersion: ENRICHMENT_VERSION_DISCOVER,
+  });
 }
 
 /**
@@ -267,6 +330,11 @@ export async function runResearchAgentAsync(
     retrieved_at: now,
     snippet: input.ingest.message ?? input.ingest.notes,
   };
+  const version =
+    input.enrichmentVersion ??
+    (input.websiteEnrichment?.fetched || (input.extraSources?.length ?? 0) > 0
+      ? ENRICHMENT_VERSION_DISCOVER
+      : ENRICHMENT_VERSION);
 
   try {
     const { data, model } = await chatJson<unknown>({
@@ -279,12 +347,14 @@ Set confidence_score based on source quality and completeness.
 matched_service_pillar: pick best fit or null from:
   mobile_native | mobile_cross_platform | web_saas | healthcare_medtech | ecommerce | erp
 icp_pass: false if domain is agency/competitor, student, or missing decision_maker contact path.
-Never invent funding amounts, app ratings, tech, or hiring signals — omit if not in sources.
-Return ONLY JSON for AgencyLeadProfile (no wrapper). Include sources array with the provided source.`,
+Never invent funding amounts, app ratings, tech, hiring signals, or emails — omit if not in sources.
+Return ONLY JSON for AgencyLeadProfile (no wrapper). Include sources array with the provided sources.`,
       user: JSON.stringify({
         ingest: { ...input.ingest, domain },
         source,
-        enrichment_version: ENRICHMENT_VERSION,
+        extra_sources: input.extraSources ?? [],
+        website_enrichment: input.websiteEnrichment ?? null,
+        enrichment_version: version,
         enriched_at: now,
         allowed_pillars: PILLAR_KEYWORDS.map((p) => p.pillar),
       }),

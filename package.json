@@ -2,17 +2,18 @@
   "name": "ai-bde",
   "private": true,
   "version": "0.1.0",
-  "description": "AI Business Development Executive platform — Phase 2 (email sequences)",
+  "description": "AI Business Development Executive platform — Phase 2B (lead discovery)",
   "workspaces": [
     "apps/*",
     "packages/*",
     "workers/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/dispatcher && npm run build -w @ai-bde/web",
-    "typecheck": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run typecheck -w @ai-bde/dispatcher && npm run typecheck -w @ai-bde/web",
+    "build": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/ingest-discover && npm run build -w @ai-bde/dispatcher && npm run build -w @ai-bde/web",
+    "typecheck": "npm run build -w @ai-bde/schemas && npm run build -w @ai-bde/orchestrator && npm run build -w @ai-bde/agents && npm run build -w @ai-bde/ingest-discover && npm run typecheck -w @ai-bde/dispatcher && npm run typecheck -w @ai-bde/web",
     "dev:web": "npm run dev -w @ai-bde/web",
     "dev:dispatcher": "npm run dev -w @ai-bde/dispatcher",
+    "discover:ingest": "npm run run:once -w @ai-bde/ingest-discover",
     "db:migrate": "node scripts/migrate.mjs",
     "seed:case-studies": "node scripts/seed-case-studies.mjs"
   },

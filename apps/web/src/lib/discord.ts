@@ -9,7 +9,8 @@ export type DiscordAlertKind =
   | "high_intent_reply"
   | "calendar_booked"
   | "sequence_paused"
-  | "opt_out";
+  | "opt_out"
+  | "discover_promoted";
 
 export async function sendDiscordAlert(input: {
   kind: DiscordAlertKind;
