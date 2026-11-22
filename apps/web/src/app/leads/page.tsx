@@ -1,3 +1,4 @@
+import { CsvUpload } from "@/components/CsvUpload";
 import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export default async function LeadsPage() {
     <>
       <h1>Leads</h1>
       <p className="lede">Pipeline states from ingest → research → HITL → contact.</p>
+      <CsvUpload />
       {error ? <div className="flash error">{error}</div> : null}
       <table className="table">
         <thead>

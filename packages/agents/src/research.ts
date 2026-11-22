@@ -11,6 +11,12 @@ import {
   type SourceRef,
   type TechStackSignal,
 } from "@ai-bde/schemas";
+import { validateResearchGrounding } from "./grounding.js";
+import {
+  GLOBAL_GROUNDING_PROMPT,
+  chatJson,
+  getLlmConfig,
+} from "./llm.js";
 
 const AGENCY_DOMAIN_HINTS = [
   "agency",
@@ -57,6 +63,10 @@ export interface ResearchResult {
   profile: AgencyLeadProfile;
   disqualify: boolean;
   disqualifyReason?: string;
+  /** Model label stored on agent_runs */
+  model: string;
+  /** Set when LLM was attempted but discarded */
+  llmFallbackReason?: string;
 }
 
 function inferSeniority(
@@ -138,6 +148,32 @@ function inferTier(ingest: LeadIngest): LeadTier | undefined {
   return undefined;
 }
 
+function finalizeDisqualify(profile: AgencyLeadProfile): ResearchResult {
+  const base = { model: "deterministic-v1" as const };
+  if (!profile.icp_pass) {
+    return {
+      ...base,
+      profile,
+      disqualify: true,
+      disqualifyReason:
+        profile.icp_fail_reasons?.join("; ") || "ICP confidence below threshold",
+    };
+  }
+  if (!profile.matched_service_pillar) {
+    return {
+      ...base,
+      profile: {
+        ...profile,
+        icp_pass: false,
+        icp_fail_reasons: ["No service pillar match"],
+      },
+      disqualify: true,
+      disqualifyReason: "No service pillar match from available signals",
+    };
+  }
+  return { ...base, profile, disqualify: false };
+}
+
 /**
  * Phase 1 Research Agent — deterministic enrichment from provided ingest only.
  * Never invents funding, ratings, or tech not present in sources.
@@ -209,21 +245,74 @@ export function runResearchAgent(input: ResearchInput): ResearchResult {
     enriched_at: now,
   };
 
-  if (!icpPass) {
+  return finalizeDisqualify(profile);
+}
+
+/**
+ * Research with optional LLM. Fail-closed: any grounding/transport failure
+ * returns the deterministic draft.
+ */
+export async function runResearchAgentAsync(
+  input: ResearchInput,
+): Promise<ResearchResult> {
+  const deterministic = runResearchAgent(input);
+  const cfg = getLlmConfig();
+  if (!cfg) return deterministic;
+
+  const domain = normalizeDomain(input.ingest.domain);
+  const now = new Date().toISOString();
+  const source: SourceRef = {
+    type: "manual",
+    title: input.sourceLabel,
+    retrieved_at: now,
+    snippet: input.ingest.message ?? input.ingest.notes,
+  };
+
+  try {
+    const { data, model } = await chatJson<unknown>({
+      system: `${GLOBAL_GROUNDING_PROMPT}
+
+SYSTEM — ACCOUNT & TECH-SIGNAL RESEARCH
+
+Produce AgencyLeadProfile JSON only from provided raw sources / tool results.
+Set confidence_score based on source quality and completeness.
+matched_service_pillar: pick best fit or null from:
+  mobile_native | mobile_cross_platform | web_saas | healthcare_medtech | ecommerce | erp
+icp_pass: false if domain is agency/competitor, student, or missing decision_maker contact path.
+Never invent funding amounts, app ratings, tech, or hiring signals — omit if not in sources.
+Return ONLY JSON for AgencyLeadProfile (no wrapper). Include sources array with the provided source.`,
+      user: JSON.stringify({
+        ingest: { ...input.ingest, domain },
+        source,
+        enrichment_version: ENRICHMENT_VERSION,
+        enriched_at: now,
+        allowed_pillars: PILLAR_KEYWORDS.map((p) => p.pillar),
+      }),
+      temperature: 0.1,
+    });
+
+    const grounded = validateResearchGrounding({
+      ingest: { ...input.ingest, domain },
+      candidate: data,
+    });
+    if (!grounded.ok) {
+      return {
+        ...deterministic,
+        llmFallbackReason: grounded.errors.join("; "),
+      };
+    }
+
+    // Ensure we still apply ICP / pillar disqualify rules consistently
+    const finalized = finalizeDisqualify(grounded.profile);
     return {
-      profile,
-      disqualify: true,
-      disqualifyReason: icpFailReasons.join("; ") || "ICP confidence below threshold",
+      ...finalized,
+      model,
+    };
+  } catch (err) {
+    return {
+      ...deterministic,
+      llmFallbackReason:
+        err instanceof Error ? err.message : "LLM research failed",
     };
   }
-
-  if (!matched) {
-    return {
-      profile: { ...profile, icp_pass: false, icp_fail_reasons: ["No service pillar match"] },
-      disqualify: true,
-      disqualifyReason: "No service pillar match from available signals",
-    };
-  }
-
-  return { profile, disqualify: false };
 }

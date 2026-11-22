@@ -1,6 +1,6 @@
 import { afterHitlReject, planTransition } from "@ai-bde/orchestrator";
 import {
-  runCopywriterAgent,
+  runCopywriterAgentAsync,
   type CopywriterResult,
 } from "@ai-bde/agents";
 import type { AgencyLeadProfile, ApprovedCaseStudy } from "@ai-bde/schemas";
@@ -109,7 +109,7 @@ export async function POST(
         ...s,
         approved: true as const,
       }));
-      rewrite = runCopywriterAgent({
+      rewrite = await runCopywriterAgentAsync({
         leadId: row.lead_id,
         profile: lead.rows[0].profile,
         approvedCaseStudies: approved,
@@ -154,11 +154,12 @@ export async function POST(
       );
       await query(
         `INSERT INTO agent_runs (lead_id, agent, input_hash, output, model, status)
-         VALUES ($1, 'copywriter', $2, $3::jsonb, 'deterministic-v1', 'success')`,
+         VALUES ($1, 'copywriter', $2, $3::jsonb, $4, 'success')`,
         [
           row.lead_id,
           createHash("sha256").update(idem).digest("hex"),
           JSON.stringify(rewrite),
+          rewrite.model,
         ],
       );
     }
