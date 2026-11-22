@@ -14,10 +14,32 @@ export interface HitlItem {
   decision_maker: { full_name?: string; email?: string };
 }
 
-export function HitlQueue({ initialItems }: { initialItems: HitlItem[] }) {
+export function HitlQueue({
+  initialItems,
+  bookingLinkBase,
+}: {
+  initialItems: HitlItem[];
+  /** Base Cal.com URL from CALCOM_LINK; lead_id metadata is appended per item. */
+  bookingLinkBase?: string | null;
+}) {
   const [items, setItems] = useState(initialItems);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  function bookingUrl(item: HitlItem): string | null {
+    if (!bookingLinkBase) return null;
+    try {
+      const url = new URL(bookingLinkBase);
+      url.searchParams.set("metadata[lead_id]", item.lead_id);
+      const email = item.decision_maker?.email;
+      const name = item.decision_maker?.full_name;
+      if (email) url.searchParams.set("email", email);
+      if (name) url.searchParams.set("name", name);
+      return url.toString();
+    } catch {
+      return bookingLinkBase;
+    }
+  }
 
   async function act(id: string, action: "approve" | "reject") {
     setBusy(id);
@@ -70,40 +92,53 @@ export function HitlQueue({ initialItems }: { initialItems: HitlItem[] }) {
   return (
     <div className="stack">
       {message ? <div className="flash">{message}</div> : null}
-      {items.map((item) => (
-        <article key={item.id} className="item">
-          <h2>
-            {item.company}
-            {item.decision_maker?.full_name
-              ? ` · ${item.decision_maker.full_name}`
-              : ""}
-          </h2>
-          <div className="meta">
-            Subject: {item.subject ?? "—"} · case_study:{" "}
-            {item.matched_case_study_id ?? "none"} · lead{" "}
-            <a href={`/leads/${item.lead_id}`}>{item.lead_id.slice(0, 8)}</a>
-          </div>
-          <pre className="draft">{item.body}</pre>
-          <div className="actions">
-            <button
-              className="primary"
-              disabled={busy === item.id}
-              onClick={() => void act(item.id, "approve")}
-              type="button"
-            >
-              Approve & enqueue send
-            </button>
-            <button
-              className="danger"
-              disabled={busy === item.id}
-              onClick={() => void act(item.id, "reject")}
-              type="button"
-            >
-              Reject → rewrite
-            </button>
-          </div>
-        </article>
-      ))}
+      {items.map((item) => {
+        const calLink = bookingUrl(item);
+        return (
+          <article key={item.id} className="item">
+            <h2>
+              {item.company}
+              {item.decision_maker?.full_name
+                ? ` · ${item.decision_maker.full_name}`
+                : ""}
+            </h2>
+            <div className="meta">
+              Subject: {item.subject ?? "—"} · case_study:{" "}
+              {item.matched_case_study_id ?? "none"} · lead{" "}
+              <a href={`/leads/${item.lead_id}`}>{item.lead_id.slice(0, 8)}</a>
+            </div>
+            <pre className="draft">{item.body}</pre>
+            <div className="actions">
+              <button
+                className="primary"
+                disabled={busy === item.id}
+                onClick={() => void act(item.id, "approve")}
+                type="button"
+              >
+                Approve & enqueue send
+              </button>
+              <button
+                className="danger"
+                disabled={busy === item.id}
+                onClick={() => void act(item.id, "reject")}
+                type="button"
+              >
+                Reject → rewrite
+              </button>
+              {calLink ? (
+                <a
+                  className="badge"
+                  href={calLink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Book discovery
+                </a>
+              ) : null}
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
