@@ -26,10 +26,12 @@ supabase/migrations/      # Postgres + pgvector DDL
 cp .env.example .env
 docker compose up -d
 npm install
-npm run db:migrate
+npm run db:migrate   # applies supabase/migrations/*.sql (creates outreach_items, etc.)
 npm run build
 npm run dev:web
 ```
+
+`db:migrate` reads `DATABASE_URL` from the environment or `.env` (default `postgresql://aibde:aibde@localhost:5432/aibde`). It must print `ok 001_initial.sql` and list `outreach_items` among tables. If an earlier failed run left an empty `schema_migrations` row bookkeeping table only, re-run `npm run db:migrate` after pulling this fix.
 
 Optional dispatcher (dry-run logs sends when `SMTP_HOST` is unset):
 

@@ -228,10 +228,7 @@ CREATE TABLE state_transitions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE schema_migrations (
-  id text PRIMARY KEY,
-  applied_at timestamptz NOT NULL DEFAULT now()
-);
+-- schema_migrations is owned by scripts/migrate.mjs (CREATE IF NOT EXISTS + bookkeeping)
 
 -- Seed: default email sequence template + low-cap inbox (inactive until SPF/DKIM/DMARC)
 INSERT INTO sequence_templates (id, name, pillar, steps, active)
