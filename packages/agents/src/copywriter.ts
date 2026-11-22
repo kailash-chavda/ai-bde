@@ -11,12 +11,21 @@ import {
   getLlmConfig,
 } from "./llm.js";
 
+export interface PriorTouch {
+  step_index: number;
+  subject: string | null;
+  body: string;
+  sent_at?: string | null;
+}
+
 export interface CopywriterInput {
   leadId: string;
   profile: AgencyLeadProfile;
   /** Only approved case studies may be passed — never unapproved */
   approvedCaseStudies: ApprovedCaseStudy[];
   stepIndex?: number;
+  templateKey?: string;
+  priorTouches?: PriorTouch[];
   senderName?: string;
   requireUnsubscribe?: boolean;
 }
@@ -67,6 +76,49 @@ function observationFromProfile(profile: AgencyLeadProfile): string {
   return "your product roadmap";
 }
 
+function stepAngle(
+  stepIndex: number,
+  templateKey: string | undefined,
+  profile: AgencyLeadProfile,
+): { subjectPrefix: string; cta: string; angle: string } {
+  const pillar =
+    profile.matched_service_pillar?.replace(/_/g, " ") ?? "engineering";
+  const key = templateKey ?? `cold_email_${stepIndex}`;
+
+  switch (key) {
+    case "cold_email_2":
+      return {
+        subjectPrefix: `Re: ${profile.company}`,
+        angle: "following up in case the earlier note got buried",
+        cta: "Happy to share a relevant approved case study if helpful — or a 15-minute discovery?",
+      };
+    case "cold_email_3":
+      return {
+        subjectPrefix: `${profile.company} — ${pillar} capacity`,
+        angle: "last short check-in from my side",
+        cta: "If timing is off, reply \"not now\" and I will pause. Otherwise open to a brief discovery call?",
+      };
+    case "cold_email_4":
+      return {
+        subjectPrefix: `${profile.company} — peer capacity`,
+        angle: "still seeing a fit on the hiring/stack signals we noted",
+        cta: "Worth a 15-minute compare-notes call this month?",
+      };
+    case "cold_email_5":
+      return {
+        subjectPrefix: `Closing the loop — ${profile.company}`,
+        angle: "closing the loop so I do not keep pinging",
+        cta: "If useful later, reply anytime and I will pick it back up.",
+      };
+    default:
+      return {
+        subjectPrefix: `${profile.company} — quick ${pillar} note`,
+        angle: observationFromProfile(profile),
+        cta: "Open to a 15-minute discovery call, or reply with a better time?",
+      };
+  }
+}
+
 function buildDraftResult(
   input: CopywriterInput,
   draftFields: {
@@ -95,6 +147,7 @@ function buildDraftResult(
         .join("; ")
     : null;
 
+  const stepIndex = input.stepIndex ?? 1;
   return {
     draft: {
       lead_id: input.leadId,
@@ -106,8 +159,8 @@ function buildDraftResult(
       case_study_ids: draftFields.caseStudyIds,
       hitl_status: "pending",
       requires_hitl: true,
-      step_index: input.stepIndex ?? 1,
-      idempotency_key: `${input.leadId}:email:step:${input.stepIndex ?? 1}`,
+      step_index: stepIndex,
+      idempotency_key: `${input.leadId}:email:step:${stepIndex}`,
     },
     observationUsed: draftFields.observationUsed,
     needsHuman,
@@ -118,14 +171,18 @@ function buildDraftResult(
 }
 
 /**
- * Phase 1 Copywriter — email only (deterministic).
+ * Copywriter — email only. Step-aware 3–5 sequence drafts.
  * Grounds portfolio claims ONLY in approved case_study_id from CONTEXT.
- * Never invents clients, metrics, or outcomes.
  */
 export function runCopywriterAgent(input: CopywriterInput): CopywriterResult {
   const sender = input.senderName ?? "Alex";
-  const study = pickCaseStudy(input.profile, input.approvedCaseStudies);
+  const stepIndex = input.stepIndex ?? 1;
+  const study =
+    stepIndex <= 2
+      ? pickCaseStudy(input.profile, input.approvedCaseStudies)
+      : null;
   const observation = observationFromProfile(input.profile);
+  const angle = stepAngle(stepIndex, input.templateKey, input.profile);
   const dmFirst =
     input.profile.decision_maker.full_name.split(/\s+/)[0] ?? "there";
 
@@ -137,7 +194,6 @@ export function runCopywriterAgent(input: CopywriterInput): CopywriterResult {
     matchedId = study.id;
     caseStudyIds.push(study.id);
     const label = study.anonymized_label ?? study.client_name;
-    // Prefer anonymized_label when client_name is null; never invent a client
     const ref = label
       ? `relevant to ${label}`
       : `aligned with our approved ${study.title} case study`;
@@ -149,26 +205,35 @@ export function runCopywriterAgent(input: CopywriterInput): CopywriterResult {
     }
   }
 
-  const bodyParts = [
-    `Hi ${dmFirst},`,
-    ``,
-    `Noticed ${observation} at ${input.profile.company}.`,
-    `We help teams with ${
-      input.profile.matched_service_pillar?.replace(/_/g, " ") ?? "software delivery"
-    } as peer engineering capacity.${portfolioSentence}`,
-    `Open to a 15-minute discovery call, or reply with a better time?`,
-    ``,
-    `— ${sender}`,
-  ];
+  const bodyParts =
+    stepIndex === 1
+      ? [
+          `Hi ${dmFirst},`,
+          ``,
+          `Noticed ${observation} at ${input.profile.company}.`,
+          `We help teams with ${
+            input.profile.matched_service_pillar?.replace(/_/g, " ") ??
+            "software delivery"
+          } as peer engineering capacity.${portfolioSentence}`,
+          angle.cta,
+          ``,
+          `— ${sender}`,
+        ]
+      : [
+          `Hi ${dmFirst},`,
+          ``,
+          `Circling back — ${angle.angle} at ${input.profile.company}.${portfolioSentence}`,
+          angle.cta,
+          ``,
+          `— ${sender}`,
+        ];
 
   if (input.requireUnsubscribe !== false) {
     bodyParts.push(``, `Unsubscribe: reply "unsubscribe"`);
   }
 
   const body = bodyParts.join("\n");
-  const subject = `${input.profile.company} — quick ${
-    input.profile.matched_service_pillar?.replace(/_/g, " ") ?? "engineering"
-  } note`;
+  const subject = angle.subjectPrefix;
 
   return buildDraftResult(
     input,
@@ -207,6 +272,7 @@ export async function runCopywriterAgentAsync(
 
   const sender = input.senderName ?? "Alex";
   const requireUnsubscribe = input.requireUnsubscribe !== false;
+  const stepIndex = input.stepIndex ?? 1;
   const contextStudies = input.approvedCaseStudies.map((s) => ({
     id: s.id,
     title: s.title,
@@ -227,10 +293,12 @@ SYSTEM — COLD EMAIL COPYWRITER
 
 Follow GLOBAL GROUNDING.
 Channel: email. Target body: under 120 words. Peer-level.
+This is sequence step ${stepIndex} (template_key=${input.templateKey ?? "cold_email_" + stepIndex}).
+For steps > 1, briefly acknowledge prior touch without repeating the full pitch.
 Structure:
   1) One concrete tech/business observation from CONTEXT.lead (must cite a real signal).
   2) One relevant capability tied to matched_service_pillar.
-  3) Optional ONE case study reference via matched_case_study_id from CONTEXT.case_studies.
+  3) Optional ONE case study reference via matched_case_study_id from CONTEXT.case_studies (prefer step 1–2 only).
   4) Soft CTA: 15-min discovery or reply with timing — no hard sell.
   5) Sign-off with sender name from CONTEXT.sender; unsubscribe footer if required.
 
@@ -241,11 +309,12 @@ case_study_ids MUST be a subset of CONTEXT.case_studies[].id — never invent UU
           lead: input.profile,
           case_studies: contextStudies,
           sender,
-          sequence_step: input.stepIndex ?? 1,
+          sequence_step: stepIndex,
+          template_key: input.templateKey ?? null,
           require_unsubscribe: requireUnsubscribe,
-          prior_touches: [],
+          prior_touches: input.priorTouches ?? [],
         },
-        TASK: `Draft step ${input.stepIndex ?? 1} cold email.`,
+        TASK: `Draft step ${stepIndex} cold email.`,
         ReturnJSON: {
           subject: "string",
           body: "string",
@@ -291,7 +360,6 @@ case_study_ids MUST be a subset of CONTEXT.case_studies[].id — never invent UU
       };
     }
 
-    // Force HITL on every send (Phase 1)
     const result = buildDraftResult(
       input,
       {

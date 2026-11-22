@@ -70,22 +70,35 @@ export async function POST(
       [itemId, parsed.data.reason],
     );
 
-    const nextState = afterHitlReject("QueuedForApproval");
-    const t = planTransition({
-      from: "QueuedForApproval",
-      to: nextState,
-      reason: `HITL rejected: ${parsed.data.reason}`,
-      actor: parsed.data.actor,
-    });
-    await query(
-      `UPDATE leads SET state = $2, updated_at = now() WHERE id = $1`,
-      [row.lead_id, t.to],
-    );
-    await query(
-      `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [row.lead_id, t.from, t.to, t.reason, t.actor],
-    );
+    // Step 1 reject → Enriched for rewrite; follow-up steps stay QueuedForApproval
+    if (row.step_index <= 1) {
+      const nextState = afterHitlReject("QueuedForApproval");
+      const t = planTransition({
+        from: "QueuedForApproval",
+        to: nextState,
+        reason: `HITL rejected: ${parsed.data.reason}`,
+        actor: parsed.data.actor,
+      });
+      await query(
+        `UPDATE leads SET state = $2, updated_at = now() WHERE id = $1`,
+        [row.lead_id, t.to],
+      );
+      await query(
+        `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [row.lead_id, t.from, t.to, t.reason, t.actor],
+      );
+    } else {
+      await query(
+        `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
+         SELECT $1, state, state, $2, $3 FROM leads WHERE id = $1`,
+        [
+          row.lead_id,
+          `HITL rejected follow-up step ${row.step_index}: ${parsed.data.reason}`,
+          parsed.data.actor,
+        ],
+      );
+    }
 
     let rewrite: CopywriterResult | null = null;
     if (parsed.data.rewrite) {
@@ -137,21 +150,29 @@ export async function POST(
           idem,
         ],
       );
-      const queued = planTransition({
-        from: "Enriched",
-        to: "QueuedForApproval",
-        reason: "Rewrite after HITL reject",
-        actor: "agent:copywriter",
-      });
-      await query(
-        `UPDATE leads SET state = $2, updated_at = now() WHERE id = $1`,
-        [row.lead_id, queued.to],
-      );
-      await query(
-        `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [row.lead_id, queued.from, queued.to, queued.reason, queued.actor],
-      );
+      if (row.step_index <= 1) {
+        const queued = planTransition({
+          from: "Enriched",
+          to: "QueuedForApproval",
+          reason: "Rewrite after HITL reject",
+          actor: "agent:copywriter",
+        });
+        await query(
+          `UPDATE leads SET state = $2, updated_at = now() WHERE id = $1`,
+          [row.lead_id, queued.to],
+        );
+        await query(
+          `INSERT INTO state_transitions (lead_id, from_state, to_state, reason, actor)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [row.lead_id, queued.from, queued.to, queued.reason, queued.actor],
+        );
+      } else {
+        await query(
+          `UPDATE leads SET state = 'QueuedForApproval', updated_at = now()
+           WHERE id = $1 AND state <> 'QueuedForApproval'`,
+          [row.lead_id],
+        );
+      }
       await query(
         `INSERT INTO agent_runs (lead_id, agent, input_hash, output, model, status)
          VALUES ($1, 'copywriter', $2, $3::jsonb, $4, 'success')`,

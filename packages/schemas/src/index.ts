@@ -314,12 +314,41 @@ export type ApprovedCaseStudy = z.infer<typeof ApprovedCaseStudySchema>;
 
 export const ENRICHMENT_VERSION = "1.0.0";
 
+/** One step in sequence_templates.steps JSONB (email-only in Phase 2 slice A) */
+export const SequenceTemplateStepSchema = z.object({
+  step_index: z.number().int().positive(),
+  channel: OutreachChannelSchema,
+  delay_business_days: z.number().int().min(0),
+  template_key: z.string().min(1),
+  requires_hitl: z.boolean().default(true),
+});
+export type SequenceTemplateStep = z.infer<typeof SequenceTemplateStepSchema>;
+
+export const SequenceTemplateStepsSchema = z
+  .array(SequenceTemplateStepSchema)
+  .min(1)
+  .max(5);
+export type SequenceTemplateSteps = z.infer<typeof SequenceTemplateStepsSchema>;
+
+export const LeadSequenceStatusSchema = z.enum([
+  "active",
+  "paused",
+  "completed",
+  "cancelled",
+]);
+export type LeadSequenceStatus = z.infer<typeof LeadSequenceStatusSchema>;
+
+/** Seed template IDs (supabase/migrations) */
+export const TEMPLATE_EMAIL_3_STEP = "11111111-1111-1111-1111-111111111111";
+export const TEMPLATE_EMAIL_5_STEP = "11111111-1111-1111-1111-111111111112";
+
 export const LEAD_TRANSITIONS: Record<LeadState, readonly LeadState[]> = {
   New: ["Enriched", "Disqualified", "DoNotContact"],
   Enriched: ["QueuedForApproval", "Disqualified", "DoNotContact"],
   QueuedForApproval: ["Contacted", "Enriched", "DoNotContact"],
   Contacted: [
     "Contacted",
+    "QueuedForApproval",
     "Replied",
     "DiscoveryBooked",
     "DoNotContact",
